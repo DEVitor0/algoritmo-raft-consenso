@@ -1,4 +1,4 @@
-import { readFile } from "node:fs/promises";
+import { readFile, rename, writeFile } from "node:fs/promises";
 import { closeSync, fsyncSync, mkdirSync, openSync, writeSync } from "node:fs";
 import { dirname } from "node:path";
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
@@ -70,6 +70,11 @@ export class JsonlWal {
     }
     return result;
   }
+  truncateSync(): void {
+    mkdirSync(dirname(this.file), { recursive: true });
+    const fd = openSync(this.file, "w");
+    try { fsyncSync(fd); } finally { closeSync(fd); }
+  }
 }
 
 export class KVStore implements KVStateMachine {
@@ -83,6 +88,14 @@ export class KVStore implements KVStateMachine {
       const { command } = item as { command: KVCommand };
       this.applyInternal(command, false);
     }
+  }
+
+  snapshot(): { values: Record<string, string>; requests: Record<string, KVResult> } {
+    return { values: Object.fromEntries(this.values), requests: Object.fromEntries(this.requests) };
+  }
+  restore(snapshot: { values?: Record<string, string>; requests?: Record<string, KVResult> }): void {
+    this.values = new Map(Object.entries(snapshot.values ?? {}));
+    this.requests = new Map(Object.entries(snapshot.requests ?? {}));
   }
   private applyInternal(command: KVCommand, persist = true): KVResult {
     if (command.requestId && this.requests.has(command.requestId)) return this.requests.get(command.requestId)!;
@@ -98,7 +111,32 @@ export class KVStore implements KVStateMachine {
     if (persist && this.wal && command.op !== "GET") this.wal.appendSync({ command });
     return result;
   }
+
   apply(command: KVCommand): KVResult { return this.applyInternal(command, true); }
+}
+
+export interface PersistedSnapshot {
+  version: 1;
+  lastIncludedIndex: number;
+  lastIncludedTerm: number;
+  store: ReturnType<KVStore["snapshot"]>;
+}
+export async function writeSnapshot(path: string, snapshot: PersistedSnapshot): Promise<void> {
+  const body = JSON.stringify(snapshot);
+  const temporary = `${path}.new`;
+  await writeFile(temporary, JSON.stringify({ snapshot, crc: crc32(body) }) + "\n", "utf8");
+  const fd = openSync(temporary, "r+"); try { fsyncSync(fd); } finally { closeSync(fd); }
+  await rename(temporary, path);
+}
+export async function readSnapshot(path: string): Promise<PersistedSnapshot | undefined> {
+  try {
+    const parsed = JSON.parse(await readFile(path, "utf8")) as { snapshot: PersistedSnapshot; crc: number };
+    if (crc32(JSON.stringify(parsed.snapshot)) !== parsed.crc) throw new Error("snapshot checksum mismatch");
+    return parsed.snapshot;
+  } catch (error: any) {
+    if (error.code === "ENOENT") return undefined;
+    throw error;
+  }
 }
 
 export class InMemoryTransport<T = unknown> implements Transport<T> {
@@ -122,12 +160,33 @@ export class RaftNode {
   readonly metrics = new RequestMetrics();
   readonly logger: StructuredLogger;
   private server: Server | undefined;
+  private readConfirmations = new Set<NodeId>();
+  private readWaiters: Array<() => void> = [];
+  readonly snapshotPath: string | undefined;
   constructor(options: RaftNodeOptions) {
     this.store = options.store ?? new KVStore(options.walPath ? new JsonlWal(options.walPath) : undefined);
     this.logger = options.logger ?? defaultLogger();
-    this.raft = new CoreRaftNode({ ...options, apply: command => this.store.apply(command) });
+    this.snapshotPath = options.walPath ? `${options.walPath}.snapshot` : undefined;
+    const transport = options.transport;
+    const observedTransport: Transport<KVCommand> = {
+      send: (from, to, message) => {
+        if (to === options.id && message.type === "AppendEntriesResponse" &&
+            message.term === this.raft?.currentTerm && message.success) {
+          this.readConfirmations.add(from);
+          for (const waiter of this.readWaiters.splice(0)) waiter();
+        }
+        transport?.send(from, to, message);
+      },
+    };
+    this.raft = new CoreRaftNode({ ...options, transport: observedTransport, apply: command => this.store.apply(command) });
   }
-  async start() { await this.store.recover(); }
+  async start() {
+    if (this.snapshotPath) {
+      const snapshot = await readSnapshot(this.snapshotPath);
+      if (snapshot) this.store.restore(snapshot.store);
+    }
+    await this.store.recover();
+  }
   tick() { this.raft.tick(); }
   async listen(port: number, host = "127.0.0.1"): Promise<void> {
     this.server = createHttpServer(this);
@@ -150,6 +209,44 @@ export class RaftNode {
   propose(command: KVCommand) {
     if (this.raft.state.role !== "leader") return { accepted: false, leaderId: this.leaderId };
     return { accepted: true, entry: this.raft.propose(command) };
+  }
+  async createSnapshot(path = this.snapshotPath): Promise<PersistedSnapshot> {
+    if (!path) throw new Error("snapshot path is not configured");
+    const snapshot: PersistedSnapshot = {
+      version: 1, lastIncludedIndex: this.raft.lastApplied,
+      lastIncludedTerm: this.raft.log[this.raft.lastApplied - 1]?.term ?? this.raft.currentTerm,
+      store: this.store.snapshot(),
+    };
+    await writeSnapshot(path, snapshot);
+    this.store.wal?.truncateSync();
+    return snapshot;
+  }
+  async installSnapshot(path: string): Promise<PersistedSnapshot> {
+    const snapshot = await readSnapshot(path);
+    if (!snapshot) throw new Error("snapshot not found");
+    this.store.restore(snapshot.store);
+    await writeSnapshot(this.snapshotPath ?? path, snapshot);
+    this.store.wal?.truncateSync();
+    return snapshot;
+  }
+  async readIndex(timeoutMs = 1000): Promise<number> {
+    if (this.raft.state.role !== "leader") throw new Error(`not leader:${this.leaderId ?? ""}`);
+    const majority = Math.floor((this.raft.peers.length + 1) / 2) + 1;
+    if (majority === 1) return this.raft.commitIndex;
+    this.readConfirmations = new Set([this.id]);
+    const state = this.raft.state;
+    if (state.role === "leader") state.heartbeatDeadline = this.raft.clock.now();
+    this.raft.tick();
+    const deadline = Date.now() + timeoutMs;
+    while (this.readConfirmations.size < majority && Date.now() < deadline) {
+      await new Promise<void>(resolve => {
+        this.readWaiters.push(resolve);
+        const remaining = Math.max(1, deadline - Date.now());
+        setTimeout(resolve, remaining);
+      });
+    }
+    if (this.readConfirmations.size < majority) throw new Error("leadership confirmation timed out");
+    return this.raft.commitIndex;
   }
   handle(from: NodeId, message: RaftMessage<KVCommand>) { this.raft.receive(from, message); }
 }
@@ -183,6 +280,13 @@ export function createHttpServer(node: RaftNode): Server {
       if (req.method === "GET" && url.pathname === "/kv") {
         const key = url.searchParams.get("key"); if (!key) return json(req, res, 400, { error: "key required" });
         return json(req, res, 200, { ok: true, value: node.store.get(key), leaderId: node.leaderId });
+      }
+      if (req.method === "GET" && url.pathname === "/status") return json(req, res, 200, node.metricsState);
+      if (req.method === "POST" && url.pathname === "/read-index") {
+        return json(req, res, 200, { index: await node.readIndex() });
+      }
+      if (req.method === "POST" && url.pathname === "/snapshot") {
+        return json(req, res, 200, await node.createSnapshot());
       }
       if (req.method === "GET" && url.pathname === "/metrics") {
         res.statusCode = 200;
@@ -222,10 +326,13 @@ export function registerFastifyRoutes(app: {
     const value = node.store.get(request.query?.key);
     return reply.send({ ok: true, value, leaderId: node.leaderId });
   });
+  app.get("/status", async (_request: any, reply: any) => reply.send(node.metricsState));
+  app.post("/read-index", async (_request: any, reply: any) => reply.send({ index: await node.readIndex() }));
+  app.post("/snapshot", async (_request: any, reply: any) => reply.send(await node.createSnapshot()));
   app.post("/kv", async (request: any, reply: any) => {
     const result = node.propose(request.body);
     if (!result.accepted) reply.code(307);
     return reply.send(result);
   });
 }
-export type { AppendEntriesRequest, AppendEntriesResponse, RequestVoteRequest, RequestVoteResponse, LogEntry };
+export type { AppendEntriesRequest, AppendEntriesResponse, RequestVoteRequest, RequestVoteResponse, LogEntry, Transport };

@@ -190,7 +190,20 @@ function parseArgs(args: string[]): BenchmarkOptions {
 }
 
 if (process.argv[1]?.endsWith('/benchmark.js')) {
-  const options = parseArgs(process.argv.slice(2));
+  const args = process.argv.slice(2);
+  if (args.includes('--help') || args.includes('-h')) {
+    console.log(`Usage: npm run benchmark -- [options]
+  --url URL
+  --concurrency N
+  --write-ratio 0..100
+  --warmup N
+  --repetitions N
+  --keys N
+  --format json|markdown
+  --output FILE`);
+    process.exit(0);
+  }
+  const options = parseArgs(args);
   runBenchmark(options)
     .then(async (report) => {
       const content =

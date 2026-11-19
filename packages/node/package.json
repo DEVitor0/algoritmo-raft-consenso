@@ -6,8 +6,11 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
-    "build": "tsup src/index.ts --format esm --dts --tsconfig tsconfig.build.json",
+    "build": "tsup src/index.ts src/cli.ts --format esm --dts --tsconfig tsconfig.build.json",
     "typecheck": "tsc -b"
+  },
+  "bin": {
+    "raft-node": "./dist/cli.js"
   },
   "dependencies": {
     "@raft/raft-core": "0.1.0"

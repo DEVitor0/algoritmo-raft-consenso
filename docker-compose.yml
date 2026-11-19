@@ -1,0 +1,24 @@
+services:
+  controller:
+    build: .
+    command: npm run cluster:dev
+    ports:
+      - "1098:1098"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:1098/api/health').then(r => { if (!r.ok) process.exit(1) }).catch(() => process.exit(1))"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  dashboard:
+    build:
+      context: .
+      target: build
+    command: npm --workspace @raft/dashboard run dev -- --host 0.0.0.0
+    environment:
+      VITE_RAFT_CONTROLLER_URL: http://localhost:1098/api
+    ports:
+      - "5173:5173"
+    depends_on:
+      controller:
+        condition: service_healthy

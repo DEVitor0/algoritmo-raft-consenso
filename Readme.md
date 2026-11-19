@@ -1,137 +1,111 @@
-<div align="center">
-  <img src="docs/image/solo.png" alt="Raft Logo" width="150" />
-  <h1>Simulador Visual do Algoritmo Raft</h1>
-</div>
+# Raft Consensus Lab
 
-## Sobre o Projeto
+Laboratório de engenharia para estudar consenso distribuído com um cluster Raft real,
+uma máquina de estados chave-valor, persistência WAL, cliente, simulador determinístico
+e dashboard operacional.
 
-Este projeto é um **simulador visual e didático do algoritmo de consenso Raft**, desenvolvido em TypeScript. Ele mostra em uma interface web conceitos como nós, líderes, logs e estados de falha para facilitar o estudo do Raft.
+## O que existe hoje
 
-O funcionamento exibido no painel é uma representação visual gerada pelo projeto. O projeto não é atualmente uma implementação distribuída e real do protocolo Raft.
+- Núcleo Raft determinístico em [`packages/raft-core`](./packages/raft-core), com eleição,
+  votos, heartbeats, replicação e avanço de commit.
+- Nó KV em [`packages/node`](./packages/node), com PUT, GET, DELETE, CAS, idempotência e
+  WAL JSON Lines com checksum.
+- Cliente em [`packages/client`](./packages/client), com redirecionamento ao líder, retry
+  e backoff.
+- Simulador determinístico em [`packages/chaos`](./packages/chaos), com relógio virtual,
+  seed, falhas de rede e verificação de invariantes.
+- Controller local e dashboard em [`packages/dashboard`](./packages/dashboard).
+- Métricas Prometheus e benchmark closed-loop com percentis medidos.
 
-## O que o projeto faz
+O cluster de desenvolvimento usa cinco nós lógicos dentro do controller local. O estado
+é real dentro do processo, mas esse modo ainda não substitui uma topologia distribuída
+com cinco processos independentes.
 
-- Exibe uma representação visual de nós de um cluster.
-- Permite visualizar estados como líder, seguidor e candidato.
-- Permite simular a queda ou reinício de nós.
-- Permite simular partições de rede e lentidão de nós.
-- Exibe logs, termos e métricas ilustrativas no dashboard.
-- Gera dados aleatórios para ajudar a observar diferentes estados da interface.
-
-## Status e limitações
-
-- As métricas de latência, throughput, CPU e memória são **simuladas**.
-- Os dados exibidos não representam medições reais de desempenho.
-- A eleição de líder do painel usa uma escolha aleatória e não implementa o protocolo RequestVote.
-- A replicação exibida não utiliza AppendEntries entre nós reais.
-- Os cinco nós são fixos no código de simulação.
-- Um motor Raft real, com eleição por timeout aleatório, replicação via AppendEntries e tolerância a falhas distribuída, está planejado, mas ainda não foi implementado.
-
-### Documentação Oficial
-
-Para aprofundamento teórico sobre o algoritmo Raft, consulte a documentação oficial: [https://raft.github.io/](https://raft.github.io/)
-
----
-
-## Índice da Documentação
-
-- [Visão Geral do Algoritmo](docs/ALGORITHM.md) - Explicação detalhada do funcionamento do Raft
-- [Arquitetura do Sistema](docs/ARCHITECTURE.md) - Estrutura e organização do código
-- [Guia de Instalação](docs/INSTALLATION.md) - Instruções para configuração do ambiente
-- [Guia de Uso](docs/USAGE.md) - Como executar e interagir com o sistema
-- [API Reference](docs/API.md) - Documentação dos endpoints REST
-- [Dashboard](docs/DASHBOARD.md) - Guia de uso da interface web
-- [Docker](docs/DOCKER.md) - Configuração e orquestração de containers
-
----
-
-## Características Principais
-
-- **Visualização de Estados**: Interface web com representação de líder, seguidores e candidatos
-- **Simulação de Falhas**: Ferramentas visuais para representar quedas de nós e partições de rede
-- **Dashboard Interativo**: Interface web para observar estados e logs simulados
-- **Métricas Ilustrativas**: Visualização de latência, throughput e recursos gerados aleatoriamente
-- **Testes Visuais de Carga**: Controles didáticos que alteram valores simulados
-- **Containerização**: Ambiente completamente dockerizado para facilitar experimentação
-
----
-
-## Tecnologias Utilizadas
-
-### Backend
-- **Node.js v20**: Runtime JavaScript
-- **TypeScript 4.7**: Tipagem estática
-- **Express**: Framework HTTP
-- **ZeroMQ 6.0**: Comunicação entre processos
-- **Redis**: Cache distribuído (opcional)
-- **MongoDB**: Persistência de dados (opcional)
-
-### Frontend
-- **React 18**: Biblioteca UI
-- **Vite 5**: Build tool e dev server
-- **Material-UI 5**: Componentes visuais
-- **Chart.js 4**: Visualização de métricas
-- **Axios**: Cliente HTTP
-
-### Infraestrutura
-- **Docker & Docker Compose**: Containerização
-- **HAProxy**: Load balancer
-- **Grunt**: Task runner
-
----
-
-## Início Rápido
+## Início rápido
 
 ```bash
-# Clonar o repositório
-git clone https://github.com/DEVitor0/algoritmo-raft-consenso.git
-cd algoritmo-raft-consenso
-
-# Instalar dependências
 npm install
-cd dashboard && npm install && cd ..
-
-# Iniciar cluster com Docker
-docker-compose -f docker-compose.raft.dev.yml up
-
-# Acessar dashboard
-http://localhost:3000
+npm run cluster:dev
+npm --workspace @raft/dashboard run dev
 ```
 
-Para instruções detalhadas, consulte o [Guia de Instalação](docs/INSTALLATION.md).
+O controller local fica em `http://127.0.0.1:1098` e o dashboard em `http://localhost:5173`.
+Quando o controller não estiver disponível, o dashboard mostra explicitamente
+`cluster não está rodando`.
 
----
+## Simulador reproduzível
 
-## Estrutura do Projeto
-
-```
-.
-├── core/                  # Código principal do servidor
-│   ├── auth/             # Sistema de autenticação
-│   ├── baseServer/       # Servidor HTTP base
-│   ├── models/           # Interfaces e tipos
-│   ├── providers/        # Implementações de serviços
-│   └── utils/            # Utilitários compartilhados
-├── raftNode/             # Estruturas e lugares reservados para o futuro motor Raft
-│   ├── models/          # Estruturas de dados do Raft
-│   └── providers/       # Eleição e replicação
-├── machineDiscovery/     # Descoberta de nós
-├── dashboard/            # Interface web React
-├── lb/                   # Configuração do load balancer
-└── docs/                 # Documentação completa
+```bash
+npm run sim -- --seed 42 --scenario isolated-leader
 ```
 
-## Autor
+Cenários disponíveis: `isolated-leader`, `majority-loss`, `symmetric-partition`,
+`cascading-restart` e `client-retry`.
 
-**DEVitor0**
-- GitHub: [@DEVitor0](https://github.com/DEVitor0)
-- Linkedin: [DEVitor0](https://www.linkedin.com/in/devitor0/)
-- Email: [devitormoreira@gmail.com](mailto:devitormoreira@gmail.com)
+## Benchmark
 
----
+O benchmark mede apenas chamadas que realmente executa. Não há números fixos no código:
 
-## Referências
+```bash
+npm run benchmark -- --url http://127.0.0.1:1098 --concurrency 4 \
+  --warmup 100 --repetitions 1000 --write-ratio 50 --format markdown \
+  --output benchmark.md
+```
 
-- [In Search of an Understandable Consensus Algorithm (Extended Version)](https://raft.github.io/raft.pdf) - Paper original do Raft
-- [Raft Consensus Algorithm](https://raft.github.io/) - Site oficial
-- [The Secret Lives of Data - Raft](http://thesecretlivesofdata.com/raft/) - Visualização interativa
+O relatório registra host, alvo, metodologia, contagens e p50/p90/p95/p99. Resultados
+devem ser comparados somente quando a máquina, configuração e metodologia forem iguais.
+
+## Arquitetura
+
+```mermaid
+flowchart LR
+  UI[Dashboard React] --> C[Controller local]
+  C --> N1[Raft node 1]
+  C --> N2[Raft node 2]
+  C --> N3[Raft node 3]
+  C --> N4[Raft node 4]
+  C --> N5[Raft node 5]
+  N1 & N2 & N3 & N4 & N5 --> K[KV state machine]
+  K --> W[WAL JSONL + CRC + fsync]
+  S[Chaos simulator] --> R[Raft core puro]
+  R --> N1
+```
+
+## Como verificamos a correção
+
+- Testes unitários do núcleo cobrem eleição, voto, conflito de log e commit.
+- O simulador usa seed e relógio virtual para repetir cenários.
+- `fast-check` gera seeds para testar estabilidade e invariantes.
+- O verificador de linearizabilidade trabalha por chave e possui históricos válidos
+  e inválidos construídos manualmente.
+
+Comandos de validação:
+
+```bash
+npm run lint
+npm run typecheck
+npm test
+npm run build
+```
+
+## Limitações conhecidas
+
+- O controller local mantém cinco nós no mesmo processo; o modo de processos Docker
+  independentes ainda precisa ser concluído.
+- ReadIndex, snapshots e InstallSnapshot estão em implementação.
+- O dashboard já tem o shell operacional, mas as páginas de caos, replay, benchmark e
+  consistência ainda precisam ser ligadas a todos os endpoints.
+- O benchmark não deve ser interpretado como resultado publicado sem especificação completa
+  da máquina e execução documentada.
+
+## Estrutura
+
+| Pacote | Responsabilidade |
+| --- | --- |
+| `packages/raft-core` | Máquina de consenso pura |
+| `packages/node` | Nó, KV, WAL, HTTP e observabilidade |
+| `packages/client` | Cliente KV com retry |
+| `packages/chaos` | Simulação, controller e benchmark |
+| `packages/dashboard` | Console web do cluster |
+
+Veja as decisões em [`docs/adr`](./docs/adr).

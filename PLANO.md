@@ -45,8 +45,9 @@
 - [x] Implementar idempotência por identificador de requisição.
 - [ ] Implementar leituras linearizáveis com ReadIndex.
 - [x] Implementar cliente com redirecionamento, retry, backoff e sequência.
-- [ ] Implementar snapshots, compactação e InstallSnapshot.
-- [ ] Implementar CLI para iniciar nó, put, get e status.
+- [x] Implementar snapshots persistidos, compactação e instalação de snapshot no nó.
+- [x] Implementar confirmação de liderança para ReadIndex.
+- [x] Implementar CLI para iniciar nó, put, get e status.
 
 ## Fase 3 — Verificação de correção
 
@@ -80,11 +81,11 @@
 
 ## Fase 6 — Acabamento
 
-- [ ] Criar Dockerfile multi-stage, `.dockerignore` e healthchecks.
-- [ ] Atualizar README somente com fatos implementados/testados.
-- [ ] Adicionar diagrama Mermaid e metodologia de benchmark real.
-- [ ] Criar ADRs sobre transporte, núcleo puro e WAL.
-- [ ] Criar `CHANGELOG.md`, `CONTRIBUTING.md` e `LICENSE`.
+- [x] Criar Dockerfile multi-stage, `.dockerignore` e healthchecks.
+- [x] Atualizar README somente com fatos implementados/testados.
+- [x] Adicionar diagrama Mermaid e metodologia de benchmark real.
+- [x] Criar ADRs sobre transporte, núcleo puro e WAL.
+- [x] Criar `CHANGELOG.md`, `CONTRIBUTING.md` e `LICENSE`.
 - [ ] Preparar versão `0.1.0` e tag após validação.
 
 ## Registro de bloqueios
