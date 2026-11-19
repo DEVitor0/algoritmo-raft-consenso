@@ -267,7 +267,22 @@ function App() {
               <span className="simulation-badge">SIMULAÇÃO DETERMINÍSTICA</span>
             )}
           </div>
-          <div className="network-map">
+          <div
+            className={`network-map ${mode === 'simulation' && snapshot.elections.length ? 'has-election' : ''}`}
+          >
+            {mode === 'simulation' && snapshot.elections.length > 0 && (
+              <div
+                className="election-event"
+                role="status"
+                key={snapshot.elections[snapshot.elections.length - 1].term}
+              >
+                <span className="event-pulse" />
+                <span>
+                  eleição observada · termo{' '}
+                  {snapshot.elections[snapshot.elections.length - 1].term}
+                </span>
+              </div>
+            )}
             <div className="network-center" aria-hidden="true">
               <span>QUORUM</span>
               <strong>
