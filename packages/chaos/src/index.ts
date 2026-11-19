@@ -1,6 +1,8 @@
 export { SeededPrng } from './seed.js';
 export { VirtualClockImpl, VirtualNetwork } from './network.js';
-export type { NetworkOptions, VirtualClock } from './network.js';
+export type { NetworkEvent, NetworkOptions, VirtualClock } from './network.js';
+export { BrowserSimulator, BROWSER_NODE_IDS } from './browser.js';
+export type { BrowserMessage, BrowserNodeSnapshot, BrowserSnapshot } from './browser.js';
 export { DeterministicSimulator, SCENARIOS } from './simulator.js';
 export type { Scenario, SimulatorOptions, SimulationReport } from './simulator.js';
 export { checkPerKeyLinearizable } from './linearizability.js';

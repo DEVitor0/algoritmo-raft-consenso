@@ -13,6 +13,15 @@ export interface NetworkOptions {
   maxDelayMs?: number;
   duplicate?: number;
   maxDuplicates?: number;
+  onEvent?: (event: NetworkEvent) => void;
+}
+
+export interface NetworkEvent {
+  kind: 'sent' | 'delivered' | 'dropped';
+  from: NodeId;
+  to: NodeId;
+  message: RaftMessage<unknown>;
+  at: number;
 }
 
 interface Envelope<T> {
@@ -49,6 +58,7 @@ export class VirtualNetwork<T = unknown> implements Transport<T> {
   maxDelayMs: number;
   duplicate: number;
   maxDuplicates: number;
+  readonly onEvent: ((event: NetworkEvent) => void) | undefined;
   sent = 0;
   dropped = 0;
   delivered = 0;
@@ -62,6 +72,7 @@ export class VirtualNetwork<T = unknown> implements Transport<T> {
     this.maxDelayMs = options.maxDelayMs ?? 40;
     this.duplicate = options.duplicate ?? 0;
     this.maxDuplicates = options.maxDuplicates ?? 1;
+    this.onEvent = options.onEvent;
   }
 
   setActive(node: NodeId, up: boolean): void {
@@ -98,6 +109,12 @@ export class VirtualNetwork<T = unknown> implements Transport<T> {
     this.partitions.clear();
   }
 
+  setLinkBlocked(from: NodeId, to: NodeId, blocked: boolean): void {
+    const key = `${from}->${to}`;
+    if (blocked) this.partitions.add(key);
+    else this.partitions.delete(key);
+  }
+
   send(from: NodeId, to: NodeId, message: RaftMessage<T>): void {
     this.sent++;
     if (
@@ -107,9 +124,11 @@ export class VirtualNetwork<T = unknown> implements Transport<T> {
       this.prng.random() < this.loss
     ) {
       this.dropped++;
+      this.onEvent?.({ kind: 'dropped', from, to, message, at: this.clock.now() });
       return;
     }
     const delay = this.prng.nextInt(this.minDelayMs, this.maxDelayMs);
+    this.onEvent?.({ kind: 'sent', from, to, message, at: this.clock.now() });
     this.enqueue(from, to, message, this.clock.now() + delay);
   }
 
@@ -143,10 +162,24 @@ export class VirtualNetwork<T = unknown> implements Transport<T> {
         this.partitions.has(`${envelope.from}->${envelope.to}`)
       ) {
         this.dropped++;
+        this.onEvent?.({
+          kind: 'dropped',
+          from: envelope.from,
+          to: envelope.to,
+          message: envelope.message,
+          at: this.clock.now(),
+        });
         continue;
       }
       this.receivers.get(envelope.to)?.(envelope.from, envelope.message);
       this.delivered++;
+      this.onEvent?.({
+        kind: 'delivered',
+        from: envelope.from,
+        to: envelope.to,
+        message: envelope.message,
+        at: this.clock.now(),
+      });
     }
   }
 
