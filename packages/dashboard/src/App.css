@@ -650,16 +650,45 @@ select:hover {
 }
 
 .verification p {
-  margin: 11px 0;
+  margin: 8px 0;
   font-size: 13px;
+}
+
+.invariant-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 10px;
+  border: 1px solid rgba(44, 91, 125, 0.55);
+  border-radius: 6px;
+  background: rgba(8, 21, 34, 0.45);
+}
+
+.invariant-icon {
+  display: grid;
+  place-items: center;
+  width: 23px;
+  height: 18px;
+  border-radius: 4px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  font-weight: 700;
 }
 
 .pass {
   color: var(--accent);
 }
 
+.pass .invariant-icon {
+  background: var(--accent-soft);
+}
+
 .fail {
   color: var(--danger);
+}
+
+.fail .invariant-icon {
+  background: rgba(240, 127, 136, 0.14);
 }
 
 .verification h3 {
@@ -717,6 +746,16 @@ select:hover {
 
   .lower-grid {
     grid-template-columns: 1fr;
+  }
+
+  .replication-summary {
+    gap: 11px;
+    flex-wrap: wrap;
+  }
+
+  .summary-state {
+    margin-left: 0;
+    width: 100%;
   }
 }
 

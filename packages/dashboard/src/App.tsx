@@ -611,11 +611,13 @@ function VerificationPanel({
             : 'indicadores do controller'}
         </span>
       </div>
-      <p className={invariants.atMostOneLeaderPerTerm ? 'pass' : 'fail'}>
-        {invariants.atMostOneLeaderPerTerm ? '✔' : '✘'} no máximo um líder por termo
+      <p className={`invariant-row ${invariants.atMostOneLeaderPerTerm ? 'pass' : 'fail'}`}>
+        <span className="invariant-icon">{invariants.atMostOneLeaderPerTerm ? 'OK' : '!!'}</span>
+        <span>no máximo um líder por termo</span>
       </p>
-      <p className={invariants.committedLogConsistency ? 'pass' : 'fail'}>
-        {invariants.committedLogConsistency ? '✔' : '✘'} logs confirmados consistentes
+      <p className={`invariant-row ${invariants.committedLogConsistency ? 'pass' : 'fail'}`}>
+        <span className="invariant-icon">{invariants.committedLogConsistency ? 'OK' : '!!'}</span>
+        <span>logs confirmados consistentes</span>
       </p>
       <h3>Linha do tempo das eleições</h3>
       {elections.length ? (
