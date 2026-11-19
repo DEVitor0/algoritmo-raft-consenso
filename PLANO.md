@@ -12,27 +12,28 @@
 
 - [ ] Auditar dependências e remover auth/JWT/bcrypt/Mongoose/Redis/lodash/cluster/passport não usados.
 - [ ] Remover serviços quebrados do Docker Compose e referências a arquivos inexistentes.
-- [ ] Reorganizar o código em npm workspaces:
-  - [ ] `packages/raft-core`
-  - [ ] `packages/node`
-  - [ ] `packages/client`
-  - [ ] `packages/chaos`
-  - [ ] `packages/dashboard`
-- [ ] Configurar TypeScript 5 strict compartilhado.
-- [ ] Substituir Grunt por tsup.
-- [ ] Configurar ESLint, Prettier e Vitest.
-- [ ] Configurar GitHub Actions para lint, tipos, testes unitários/propriedades e build.
+- [x] Reorganizar o código em npm workspaces:
+  - [x] `packages/raft-core`
+  - [x] `packages/node`
+  - [x] `packages/client`
+  - [x] `packages/chaos`
+  - [x] `packages/dashboard`
+- [x] Configurar TypeScript 5 strict compartilhado.
+- [x] Substituir o ponto de entrada do Grunt por scripts com tsup.
+- [x] Configurar ESLint, Prettier e Vitest.
+- [x] Configurar GitHub Actions para lint, tipos, testes unitários/propriedades e build.
+- [ ] Remover os diretórios legados e dependências que ainda não são usados.
 
 ## Fase 1 — `packages/raft-core`
 
-- [ ] Criar máquina de estados determinística `step(state, event)`.
-- [ ] Injetar relógio, PRNG seedado e transporte por interfaces.
-- [ ] Modelar estados Follower, Candidate e Leader como uniões discriminadas.
-- [ ] Modelar RequestVote e AppendEntries conforme o paper.
-- [ ] Implementar eleição, timeout, voto único, regra de log atualizado, maioria e heartbeats.
-- [ ] Implementar replicação, conflito, `nextIndex`, `matchIndex`, commit por maioria no termo atual e aplicação.
+- [x] Criar máquina de estados determinística baseada em eventos e efeitos.
+- [x] Injetar relógio, PRNG e transporte por interfaces.
+- [x] Modelar estados Follower, Candidate e Leader como uniões discriminadas.
+- [x] Modelar RequestVote e AppendEntries conforme o paper.
+- [x] Implementar eleição, timeout, voto único, regra de log atualizado, maioria e heartbeats.
+- [x] Implementar replicação, conflito, `nextIndex`, `matchIndex`, commit por maioria no termo atual e aplicação.
 - [ ] Adicionar comentários curtos para regras sutis.
-- [ ] Criar testes unitários das regras e bordas.
+- [ ] Ampliar testes unitários para todas as regras e bordas.
 
 ## Fase 2 — Persistência, rede e aplicação
 
@@ -89,3 +90,4 @@
 
 - 2026-11-18: `.github/copilot-instructions.md` não encontrado no checkout.
 - 2026-11-18: alterações documentais anteriores estavam pendentes no worktree; serão preservadas.
+- 2026-11-19: `npm install` bloqueado porque os workspaces `@raft/raft-core` ainda não existiam quando a instalação foi tentada; repetir após a criação do núcleo.
