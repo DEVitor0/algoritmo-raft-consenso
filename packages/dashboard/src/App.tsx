@@ -86,7 +86,6 @@ function App() {
     const selectors = [
       '[id="tutorial-time-control"]',
       '[id="tutorial-speed-control"]',
-      '[id="tutorial-time-control"]',
       '[id="tutorial-network"]',
       '[id="tutorial-console"]',
     ];
@@ -133,7 +132,6 @@ function App() {
     for (let elapsed = 0; elapsed < time; elapsed += 10) nextSimulator.step();
     simulator.current = nextSimulator;
     setSnapshot(nextSimulator.snapshot());
-    setPlaying(false);
   };
 
   const toggleNodeSelection = (id: string) => {
@@ -270,7 +268,7 @@ function App() {
 
   const finishGuidedStep = (step: number) => {
     if (guidedStep !== step) return;
-    if (step === 4) {
+    if (step === 3) {
       setGuidedStep(null);
       setTutorialFinished(true);
       window.setTimeout(() => setTutorialFinished(false), 4000);
@@ -379,7 +377,10 @@ function App() {
                   /5
                 </strong>
               </div>
-              <MessageLayer messages={messages} />
+              <MessageLayer
+                messages={messages}
+                nodes={visibleNodes}
+              />
               {visibleNodes.map((node, index) => (
                 <NodeCard
                   key={node.id}
@@ -390,7 +391,7 @@ function App() {
                   onToggle={() => {
                     if (mode !== 'simulation') return;
                     toggleNode(node.id);
-                    finishGuidedStep(3);
+                    finishGuidedStep(2);
                   }}
                 />
               ))}
@@ -425,7 +426,6 @@ function App() {
             onStep={step}
             onSeek={(time) => {
               seekSimulation(time);
-              if (time > 0) finishGuidedStep(2);
             }}
           />
         )}
@@ -452,7 +452,7 @@ function App() {
               <button
                 onClick={() => {
                   void submitPut();
-                  finishGuidedStep(4);
+                  finishGuidedStep(3);
                 }}
               >
                 PUT
@@ -524,17 +524,12 @@ function GuidedTutorial({ step, onSkip }: { step: number; onSkip: () => void }) 
       target: 'Velocidade 3x',
     },
     {
-      title: '3. Avance o tempo em milissegundos',
-      description: 'Arraste a régua ou clique nela. O tempo controla quanto a eleição pode evoluir.',
-      target: 'Tempo virtual',
-    },
-    {
-      title: '4. Derrube um servidor',
+      title: '3. Derrube um servidor',
       description: 'Dê duplo clique em qualquer nó da topologia. Observe a mudança de estado e a reação da maioria.',
       target: 'Servidor',
     },
     {
-      title: '5. Envie uma operação',
+      title: '4. Envie uma operação',
       description: 'Clique em PUT no Console KV. A alteração é proposta ao líder e replicada entre os nós.',
       target: 'PUT',
     },
@@ -682,9 +677,10 @@ function LogMatrix({ nodes }: { nodes: Array<BrowserSnapshot['nodes'][number] | 
              return (
                <span
                  key={index}
-                 className={entry ? (entry.committed ? 'filled committed' : 'filled pending') : ''}
+                 className={`matrix-cell ${entry ? (entry.committed ? 'filled committed' : 'filled pending') : ''}`}
                >
                  {entry ? entry.term : ''}
+                 {entry?.committed && <i className="confirmed-dot" aria-label="confirmado" />}
                </span>
              );
            })}
@@ -803,16 +799,71 @@ function NodeCard({
   );
 }
 
-function MessageLayer({ messages }: { messages: BrowserMessage[] }) {
+function MessageLayer({
+  messages,
+  nodes,
+}: {
+  messages: BrowserMessage[];
+  nodes: Array<BrowserSnapshot['nodes'][number] | ClusterNode>;
+}) {
   const point = (id: string) => {
     const index = BROWSER_NODE_IDS.indexOf(id as (typeof BROWSER_NODE_IDS)[number]);
     const angle = (index / 5) * Math.PI * 2 - Math.PI / 2;
     return { x: 50 + Math.cos(angle) * 37, y: 50 + Math.sin(angle) * 37 };
   };
+  const activeNodeIds = new Set(
+    nodes
+      .filter((node) =>
+        'active' in node
+          ? node.active
+          : 'state' in node
+            ? node.state === 'running'
+            : false,
+      )
+      .map((node) => node.id),
+  );
+  const leader = nodes.find((node) => node.role === 'leader');
+  const leaderId = leader && activeNodeIds.has(leader.id) ? leader.id : null;
+  const leaderPoint = leaderId ? point(leaderId) : { x: 50, y: 13 };
   return (
     <div className="message-layer" aria-label="Mensagens da rede">
+      <div className="replication-packets" aria-hidden="true">
+        {BROWSER_NODE_IDS.map((id, index) => {
+          if (!leaderId || id === leaderId || !activeNodeIds.has(id)) return null;
+          const target = point(id);
+          return (
+            <span
+              key={id}
+              className={`replication-packet replication-out-${index}`}
+              style={{
+                '--packet-origin-x': `${leaderPoint.x}%`,
+                '--packet-origin-y': `${leaderPoint.y}%`,
+                '--packet-target-x': `${target.x}%`,
+                '--packet-target-y': `${target.y}%`,
+              } as CSSProperties}
+            />
+          );
+        })}
+        {BROWSER_NODE_IDS.map((id, index) => {
+          if (!leaderId || id === leaderId || !activeNodeIds.has(id)) return null;
+          const origin = point(id);
+          return (
+            <span
+              key={`ack-${id}`}
+              className={`confirmation-packet confirmation-out-${index}`}
+              style={{
+                '--confirmation-origin-x': `${origin.x}%`,
+                '--confirmation-origin-y': `${origin.y}%`,
+                '--confirmation-target-x': `${leaderPoint.x}%`,
+                '--confirmation-target-y': `${leaderPoint.y}%`,
+              } as CSSProperties}
+            />
+          );
+        })}
+      </div>
       <svg className="message-routes" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
         {messages.slice(-12).map((message) => {
+          if (!activeNodeIds.has(message.from) || !activeNodeIds.has(message.to)) return null;
           const from = point(message.from);
           const to = point(message.to);
           return (
@@ -828,6 +879,7 @@ function MessageLayer({ messages }: { messages: BrowserMessage[] }) {
         })}
       </svg>
       {messages.slice(-20).map((message) => {
+        if (!activeNodeIds.has(message.from) || !activeNodeIds.has(message.to)) return null;
         const from = point(message.from);
         const to = point(message.to);
         return (
