@@ -246,6 +246,66 @@ select:hover {
   box-shadow: 0 0 70px rgba(59, 141, 181, 0.08) inset;
 }
 
+.network-center {
+  position: absolute;
+  z-index: 1;
+  top: 50%;
+  left: 50%;
+  display: grid;
+  place-items: center;
+  width: 104px;
+  height: 104px;
+  transform: translate(-50%, -50%);
+  border: 1px solid #2c5b7d;
+  border-radius: 50%;
+  background: rgba(8, 21, 34, 0.72);
+  box-shadow: 0 0 0 10px rgba(44, 91, 125, 0.06);
+}
+
+.network-center span {
+  color: var(--muted);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+}
+
+.network-center strong {
+  color: var(--accent);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 23px;
+}
+
+.network-legend {
+  display: flex;
+  gap: 18px;
+  margin-top: 12px;
+  color: var(--muted);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+}
+
+.network-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.legend-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--blue);
+}
+
+.legend-dot.leader {
+  background: var(--accent);
+}
+
+.legend-dot.offline {
+  background: var(--danger);
+}
+
 .node-card {
   position: absolute;
   transform: translate(-50%, -50%);
@@ -276,10 +336,28 @@ select:hover {
   font-size: 19px;
 }
 
-.node-card span {
+.node-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.node-card .node-role {
   text-transform: uppercase;
   font-size: 11px;
   letter-spacing: 0.08em;
+}
+
+.node-status {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 10px currentColor;
+}
+
+.node-status.offline {
+  background: var(--danger);
 }
 
 .node-card small {

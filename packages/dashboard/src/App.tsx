@@ -268,6 +268,14 @@ function App() {
             )}
           </div>
           <div className="network-map">
+            <div className="network-center" aria-hidden="true">
+              <span>QUORUM</span>
+              <strong>
+                {visibleNodes.filter((node) => !('active' in node) || node.active)
+                  .filter((node) => !('state' in node) || node.state === 'running').length}
+                /5
+              </strong>
+            </div>
             <MessageLayer messages={messages} />
             {visibleNodes.map((node, index) => (
               <NodeCard
@@ -279,6 +287,11 @@ function App() {
                 onToggle={() => mode === 'simulation' && toggleNode(node.id)}
               />
             ))}
+          </div>
+          <div className="network-legend" aria-label="Legenda dos estados dos nós">
+            <span><i className="legend-dot leader" /> líder</span>
+            <span><i className="legend-dot follower" /> follower</span>
+            <span><i className="legend-dot offline" /> indisponível</span>
           </div>
           {mode === 'simulation' && (
             <p className="hint">
@@ -454,6 +467,7 @@ function NodeCard({
   const role = node.role ?? 'follower';
   const offline =
     ('active' in node && node.active === false) || ('state' in node && node.state === 'stopped');
+  const status = offline ? 'offline' : 'online';
   return (
     <button
       className={`node-card role-${role} ${selected ? 'selected-node' : ''} ${offline ? 'offline-node' : ''}`}
@@ -461,8 +475,11 @@ function NodeCard({
       onClick={onClick}
       onDoubleClick={onToggle}
     >
-      <strong>{node.id}</strong>
-      <span>{role}</span>
+      <div className="node-card-header">
+        <strong>{node.id}</strong>
+        <span className={`node-status ${status}`} aria-label={`nó ${status}`} />
+      </div>
+      <span className="node-role">{role}</span>
       <small>
         termo {node.term} · commit {node.commitIndex}
       </small>
