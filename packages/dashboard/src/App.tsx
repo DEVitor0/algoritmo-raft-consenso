@@ -58,9 +58,18 @@ function App() {
   const [scenario, setScenario] = useState<Scenario | null>(null);
   const [cluster, setCluster] = useState<ClusterSnapshot | null>(null);
   const [clusterError, setClusterError] = useState<string | null>(null);
-  const [kvKey, setKvKey] = useState('demo');
-  const [kvValue, setKvValue] = useState('hello');
+  const [kvKey, setKvKey] = useState('hello');
+  const [kvValue, setKvValue] = useState('world');
   const [kvResult, setKvResult] = useState<string | null>(null);
+  const [tutorialOpen, setTutorialOpen] = useState(() => {
+    try {
+      return window.localStorage.getItem('raft-lab-tutorial-seen') !== 'true';
+    } catch {
+      return true;
+    }
+  });
+  const [guidedStep, setGuidedStep] = useState<number | null>(null);
+  const [tutorialFinished, setTutorialFinished] = useState(false);
 
   const step = useCallback(() => {
     setSnapshot(simulator.current.step());
@@ -71,6 +80,23 @@ function App() {
     const timer = window.setInterval(step, Math.max(50, 500 / speed));
     return () => window.clearInterval(timer);
   }, [mode, playing, speed, step]);
+
+  useEffect(() => {
+    if (guidedStep === null) return;
+    const selectors = [
+      '[id="tutorial-time-control"]',
+      '[id="tutorial-speed-control"]',
+      '[id="tutorial-time-control"]',
+      '[id="tutorial-network"]',
+      '[id="tutorial-console"]',
+    ];
+    const target = document.querySelector(selectors[guidedStep]);
+    window.setTimeout(() => {
+      target?.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+      target?.classList.add('tutorial-target-reveal');
+      window.setTimeout(() => target?.classList.remove('tutorial-target-reveal'), 900);
+    }, 120);
+  }, [guidedStep]);
 
   const refreshCluster = useCallback(async () => {
     try {
@@ -99,6 +125,15 @@ function App() {
     setSnapshot(simulator.current.snapshot());
     setSelectedNodes([]);
     setScenario(null);
+  };
+
+  const seekSimulation = (time: number) => {
+    const parsedSeed = Number.isFinite(seed) ? seed >>> 0 : 42;
+    const nextSimulator = new BrowserSimulator(parsedSeed);
+    for (let elapsed = 0; elapsed < time; elapsed += 10) nextSimulator.step();
+    simulator.current = nextSimulator;
+    setSnapshot(nextSimulator.snapshot());
+    setPlaying(false);
   };
 
   const toggleNodeSelection = (id: string) => {
@@ -201,11 +236,54 @@ function App() {
     }
   };
 
+  const openTutorial = () => {
+    setTutorialOpen(true);
+    setGuidedStep(null);
+    try {
+      window.localStorage.setItem('raft-lab-tutorial-seen', 'true');
+    } catch {
+      // Tutorial remains available for the current session when storage is unavailable.
+    }
+  };
+
+  const closeTutorial = () => {
+    setTutorialOpen(false);
+    setGuidedStep(0);
+    setTutorialFinished(false);
+    try {
+      window.localStorage.setItem('raft-lab-tutorial-seen', 'true');
+    } catch {
+      // The in-memory state still prevents reopening during this session.
+    }
+  };
+
+  const skipTutorial = () => {
+    setTutorialOpen(false);
+    setGuidedStep(null);
+    setTutorialFinished(false);
+    try {
+      window.localStorage.setItem('raft-lab-tutorial-seen', 'true');
+    } catch {
+      // The tutorial remains skipped for the current session.
+    }
+  };
+
+  const finishGuidedStep = (step: number) => {
+    if (guidedStep !== step) return;
+    if (step === 4) {
+      setGuidedStep(null);
+      setTutorialFinished(true);
+      window.setTimeout(() => setTutorialFinished(false), 4000);
+      return;
+    }
+    setGuidedStep(step + 1);
+  };
+
   const visibleNodes = mode === 'simulation' ? snapshot.nodes : (cluster?.nodes ?? []);
   const messages = mode === 'simulation' ? snapshot.messages : [];
 
   return (
-    <div className="lab-shell">
+    <div className="lab-shell" data-tutorial-step={guidedStep ?? undefined}>
       <header className="lab-header">
         <div>
           <p className="eyebrow">RAFT / LABORATÓRIO VISUAL</p>
@@ -216,6 +294,12 @@ function App() {
           </p>
         </div>
         <div className="mode-switch">
+          <button
+            className="tutorial-button"
+            onClick={openTutorial}
+          >
+            Como funciona
+          </button>
           <button
             className={mode === 'simulation' ? 'selected' : ''}
             onClick={() => setMode('simulation')}
@@ -239,7 +323,10 @@ function App() {
             playing={playing}
             setPlaying={setPlaying}
             speed={speed}
-            setSpeed={setSpeed}
+            setSpeed={(next) => {
+              setSpeed(next);
+              if (next >= 3) finishGuidedStep(1);
+            }}
             step={step}
             reset={restartSimulation}
             scenario={scenario}
@@ -253,93 +340,98 @@ function App() {
           />
         )}
 
-        <section className="visual-panel">
-          <div className="panel-title">
-            <div>
-              <h2>{mode === 'simulation' ? 'Rede virtual' : 'Cluster conectado'}</h2>
-              <span>
-                {mode === 'simulation'
-                  ? `seed ${snapshot.seed} · tempo virtual ${snapshot.time} ms`
-                  : 'estado observado via API REST'}
-              </span>
-            </div>
-            {mode === 'simulation' && (
-              <span className="simulation-badge">SIMULAÇÃO DETERMINÍSTICA</span>
-            )}
-          </div>
-          <div
-            className={`network-map ${mode === 'simulation' && snapshot.elections.length ? 'has-election' : ''}`}
-          >
-            {mode === 'simulation' && snapshot.elections.length > 0 && (
-              <div
-                className="election-event"
-                role="status"
-                key={snapshot.elections[snapshot.elections.length - 1].term}
-              >
-                <span className="event-pulse" />
+        <div className="dashboard-grid">
+          <section className="visual-panel" id="tutorial-network">
+            <div className="panel-title">
+              <div>
+                <h2>{mode === 'simulation' ? 'Topologia do consenso' : 'Cluster conectado'}</h2>
                 <span>
-                  eleição observada · termo{' '}
-                  {snapshot.elections[snapshot.elections.length - 1].term}
+                  {mode === 'simulation'
+                    ? `seed ${snapshot.seed} · ${snapshot.time} ms`
+                    : 'estado observado via API REST'}
                 </span>
               </div>
-            )}
-            <div className="network-center" aria-hidden="true">
-              <span>QUORUM</span>
-              <strong>
-                {visibleNodes.filter((node) => !('active' in node) || node.active)
-                  .filter((node) => !('state' in node) || node.state === 'running').length}
-                /5
-              </strong>
+              {mode === 'simulation' && (
+                <span className="simulation-badge">LABORATÓRIO AO VIVO</span>
+              )}
             </div>
-            <MessageLayer messages={messages} />
-            {visibleNodes.map((node, index) => (
-              <NodeCard
-                key={node.id}
-                node={node}
-                index={index}
-                selected={selectedNodes.includes(node.id)}
-                onClick={() => mode === 'simulation' && toggleNodeSelection(node.id)}
-                onToggle={() => mode === 'simulation' && toggleNode(node.id)}
-              />
-            ))}
-          </div>
-          <div className="network-legend" aria-label="Legenda dos estados dos nós">
-            <span><i className="legend-dot leader" /> líder</span>
-            <span><i className="legend-dot follower" /> follower</span>
-            <span><i className="legend-dot offline" /> indisponível</span>
-          </div>
-          <div className="replication-summary">
-            <span className="summary-label">REPLICAÇÃO</span>
-            <span>
-              commit{' '}
-              <strong>
-                {mode === 'simulation'
-                  ? Math.max(...snapshot.nodes.map((node) => node.commitIndex))
-                  : cluster?.commitIndex ?? 0}
-              </strong>
-            </span>
-            <span>
-              termo{' '}
-              <strong>
-                {mode === 'simulation'
-                  ? Math.max(...snapshot.nodes.map((node) => node.term))
-                  : cluster?.term ?? 0}
-              </strong>
-            </span>
-            <span className="summary-state">
-              <i /> {mode === 'simulation' ? 'log local' : cluster ? 'sincronizado' : 'aguardando controller'}
-            </span>
-          </div>
-          {mode === 'simulation' && (
-            <p className="hint">
-              Clique em dois nós para cortar/restaurar o link. Duplo clique em um nó para pará-lo ou
-              religá-lo.
-            </p>
-          )}
-        </section>
+            <div
+              className={`network-map ${mode === 'simulation' && snapshot.elections.length ? 'has-election' : ''}`}
+            >
+              {mode === 'simulation' && snapshot.elections.length > 0 && (
+                <div
+                  className="election-event"
+                  role="status"
+                  key={snapshot.elections[snapshot.elections.length - 1].term}
+                >
+                  <span className="event-pulse" />
+                  <span>
+                    eleição observada · termo{' '}
+                    {snapshot.elections[snapshot.elections.length - 1].term}
+                  </span>
+                </div>
+              )}
+              <div className="network-center" aria-hidden="true">
+                <span>MAIORIA</span>
+                <strong>
+                  {visibleNodes.filter((node) => !('active' in node) || node.active)
+                    .filter((node) => !('state' in node) || node.state === 'running').length}
+                  /5
+                </strong>
+              </div>
+              <MessageLayer messages={messages} />
+              {visibleNodes.map((node, index) => (
+                <NodeCard
+                  key={node.id}
+                  node={node}
+                  index={index}
+                  selected={selectedNodes.includes(node.id)}
+                  onClick={() => mode === 'simulation' && toggleNodeSelection(node.id)}
+                  onToggle={() => {
+                    if (mode !== 'simulation') return;
+                    toggleNode(node.id);
+                    finishGuidedStep(3);
+                  }}
+                />
+              ))}
+            </div>
+            <div className="network-legend" aria-label="Legenda dos estados dos nós">
+              <span><i className="legend-dot leader" /> líder</span>
+              <span><i className="legend-dot follower" /> follower</span>
+              <span><i className="legend-dot offline" /> indisponível</span>
+            </div>
+            <div className="replication-summary">
+              <span className="summary-label">ESTADO</span>
+              <span>commit <strong>{mode === 'simulation' ? Math.max(...snapshot.nodes.map((node) => node.commitIndex)) : cluster?.commitIndex ?? 0}</strong></span>
+              <span>termo <strong>{mode === 'simulation' ? Math.max(...snapshot.nodes.map((node) => node.term)) : cluster?.term ?? 0}</strong></span>
+              <span className="summary-state"><i /> {mode === 'simulation' ? 'replicando' : cluster ? 'sincronizado' : 'aguardando controller'}</span>
+            </div>
+            {mode === 'simulation' && (
+              <p className="hint">Clique em dois nós para particionar. Duplo clique pausa ou religa um servidor.</p>
+            )}
+          </section>
+          <LogMatrix nodes={visibleNodes} />
+        </div>
+
+        {mode === 'simulation' && (
+          <TimeRail
+            time={snapshot.time}
+            playing={playing}
+            speed={speed}
+            onPlay={() => {
+              setPlaying(!playing);
+              finishGuidedStep(0);
+            }}
+            onStep={step}
+            onSeek={(time) => {
+              seekSimulation(time);
+              if (time > 0) finishGuidedStep(2);
+            }}
+          />
+        )}
 
         <div className="lower-grid">
-          <section className="panel">
+          <section className="panel" id="tutorial-console">
             <div className="panel-title">
               <h2>Console KV</h2>
               <span>comando real na simulação ou no controller</span>
@@ -357,7 +449,14 @@ function App() {
                 aria-label="Valor"
                 placeholder="valor"
               />
-              <button onClick={() => void submitPut()}>PUT</button>
+              <button
+                onClick={() => {
+                  void submitPut();
+                  finishGuidedStep(4);
+                }}
+              >
+                PUT
+              </button>
               <button className="secondary" onClick={() => void submitGet()}>
                 GET
               </button>
@@ -367,7 +466,93 @@ function App() {
           <VerificationPanel snapshot={snapshot} mode={mode} cluster={cluster} />
         </div>
       </main>
+      {tutorialOpen && (
+        <IntroTutorial onStart={closeTutorial} onSkip={skipTutorial} />
+      )}
+      {guidedStep !== null && (
+        <GuidedTutorial step={guidedStep} onSkip={skipTutorial} />
+      )}
+      {tutorialFinished && (
+        <div className="tutorial-complete" role="status">
+          <span>✓</span> Tutorial concluído — agora você já sabe testar o Raft
+        </div>
+      )}
     </div>
+  );
+}
+
+function IntroTutorial({
+  onStart,
+  onSkip,
+}: {
+  onStart: () => void;
+  onSkip: () => void;
+}) {
+  return (
+    <div className="tutorial-backdrop" role="dialog" aria-modal="true" aria-labelledby="tutorial-title">
+      <section className="intro-card">
+        <p className="eyebrow">POR QUE ESTE LABORATÓRIO EXISTE</p>
+        <h2 id="tutorial-title">Um servidor não pode decidir sozinho.</h2>
+        <p>
+          Em um banco ou sistema de pagamentos, perder um servidor no momento errado pode gerar
+          cobrança em duplicidade e saldos diferentes. Isso quebra a confiança no sistema.
+        </p>
+        <p>
+          O Raft distribui as informações entre vários servidores. Mesmo que um servidor pegue fogo
+          — <span aria-label="banco pegando fogo">🏦🔥</span> — os dados continuam seguros em cópias
+          consistentes nos outros nós.
+        </p>
+        <div className="intro-actions">
+          <button className="tutorial-start" onClick={onStart}>Começar tutorial guiado</button>
+          <button className="secondary" onClick={onSkip}>Pular tutorial</button>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function GuidedTutorial({ step, onSkip }: { step: number; onSkip: () => void }) {
+  const steps = [
+    {
+      title: '1. Inicie a simulação',
+      description: 'Clique no botão Executar. Ele começa o tempo virtual e ativa a comunicação entre os servidores.',
+      target: 'Executar / Pausar',
+    },
+    {
+      title: '2. Aumente a velocidade',
+      description: 'Altere a velocidade da simulação para 3x ou mais. Isso faz as mensagens e eleições avançarem mais rápido.',
+      target: 'Velocidade 3x',
+    },
+    {
+      title: '3. Avance o tempo em milissegundos',
+      description: 'Arraste a régua ou clique nela. O tempo controla quanto a eleição pode evoluir.',
+      target: 'Tempo virtual',
+    },
+    {
+      title: '4. Derrube um servidor',
+      description: 'Dê duplo clique em qualquer nó da topologia. Observe a mudança de estado e a reação da maioria.',
+      target: 'Servidor',
+    },
+    {
+      title: '5. Envie uma operação',
+      description: 'Clique em PUT no Console KV. A alteração é proposta ao líder e replicada entre os nós.',
+      target: 'PUT',
+    },
+  ];
+  const current = steps[step];
+  return (
+    <aside className="guided-tutorial" role="status" aria-live="polite">
+      <div className="guided-progress">
+        <span>ETAPA {step + 1} DE {steps.length}</span>
+        <button onClick={onSkip}>Pular</button>
+      </div>
+      <h3>{current.title}</h3>
+      <p>{current.description}</p>
+      <div className="guided-target">
+        <span className="guided-hand" aria-hidden="true">☝</span>
+        clique em <strong>{current.target}</strong>
+      </div>
+    </aside>
   );
 }
 
@@ -386,12 +571,6 @@ function SimulationControls(props: {
   return (
     <section className="controls panel">
       <div className="control-group">
-        <button onClick={() => props.setPlaying(!props.playing)}>
-          {props.playing ? 'Pausa' : 'Play'}
-        </button>
-        <button className="secondary" onClick={props.step}>
-          Passo
-        </button>
         <button className="secondary" onClick={props.reset}>
           Reiniciar
         </button>
@@ -399,6 +578,7 @@ function SimulationControls(props: {
       <label>
         Velocidade{' '}
         <input
+          id="tutorial-speed-control"
           type="range"
           min="1"
           max="5"
@@ -421,6 +601,7 @@ function SimulationControls(props: {
         onChange={(event) =>
           event.target.value && props.runScenario(event.target.value as Scenario)
         }
+
       >
         <option value="">Cenários guiados...</option>
         <option value="leader-falls">Líder cai</option>
@@ -431,6 +612,91 @@ function SimulationControls(props: {
       {props.scenario && <span className="scenario-copy">{scenarioText[props.scenario]}</span>}
     </section>
   );
+}
+
+function TimeRail({
+ time,
+ playing,
+ speed,
+ onPlay,
+ onStep,
+ onSeek,
+}: {
+ time: number;
+ playing: boolean;
+ speed: number;
+ onPlay: () => void;
+ onStep: () => void;
+ onSeek: (time: number) => void;
+}) {
+ return (
+   <section id="tutorial-time-control" className="time-rail" aria-label="Controles temporais da simulação">
+     <div className="time-icon">◷</div>
+     <div className="time-track">
+       <input
+         type="range"
+         min="0"
+         max="1000"
+         step="10"
+         value={Math.min(time, 1000)}
+         onChange={(event) => onSeek(Number(event.target.value))}
+         aria-label="Tempo virtual"
+       />
+       <div className="time-labels">
+         <span>0 ms</span>
+         <strong>{time} ms</strong>
+         <span>1000 ms</span>
+       </div>
+     </div>
+     <button className="time-play" onClick={onPlay}>
+       {playing ? 'Pausar' : 'Executar'}
+     </button>
+     <button className="time-step" onClick={onStep} aria-label="Avançar um passo">
+       +10
+     </button>
+     <span className="speed-badge">{speed}x</span>
+   </section>
+ );
+}
+
+function LogMatrix({ nodes }: { nodes: Array<BrowserSnapshot['nodes'][number] | ClusterNode> }) {
+ return (
+   <section className="log-matrix panel">
+     <div className="panel-title">
+       <div>
+         <h2>Diário de replicação</h2>
+         <span>cada célula é uma entrada do log</span>
+       </div>
+       <span className="matrix-live"><i /> AO VIVO</span>
+     </div>
+     <div className="matrix-header">
+       <span>nó</span>
+       {Array.from({ length: 10 }, (_, index) => <span key={index}>{index + 1}</span>)}
+     </div>
+     <div className="matrix-body">
+       {nodes.map((node) => (
+         <div className="matrix-row" key={node.id}>
+           <strong>{node.id}</strong>
+           {Array.from({ length: 10 }, (_, index) => {
+             const entry = 'log' in node ? node.log[index] : undefined;
+             return (
+               <span
+                 key={index}
+                 className={entry ? (entry.committed ? 'filled committed' : 'filled pending') : ''}
+               >
+                 {entry ? entry.term : ''}
+               </span>
+             );
+           })}
+         </div>
+       ))}
+     </div>
+     <div className="matrix-key">
+       <span><i className="key-committed" /> confirmado</span>
+       <span><i className="key-pending" /> aguardando maioria</span>
+     </div>
+   </section>
+ );
 }
 
 function ClusterControls({
@@ -577,7 +843,9 @@ function MessageLayer({ messages }: { messages: BrowserMessage[] }) {
               } as CSSProperties
             }
             title={`${message.type}: ${message.from} → ${message.to}`}
-          />
+          >
+            <span className="message-packet-label">{message.type}</span>
+          </span>
         );
       })}
     </div>
