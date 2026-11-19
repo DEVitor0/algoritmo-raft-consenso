@@ -70,6 +70,10 @@
 
 ## Fase 5 — Orquestração e dashboard
 
+- [x] Expor uma entrada browser-only do simulador sem APIs Node.
+- [x] Criar laboratório visual no dashboard com seed, passo, play/pausa, cenários e invariantes.
+- [x] Conectar controles do dashboard às rotas reais do `cluster:dev`.
+- [x] Configurar build estático e deploy do dashboard no GitHub Pages.
 - [x] Criar controlador para subir, derrubar e reiniciar nós.
 - [x] Expor API REST e WebSocket do controlador.
 - [x] Implementar injeção administrativa de partição.
@@ -96,3 +100,4 @@
 - 2026-11-19: `fast-check` não está instalado neste checkout; os testes de propriedade usam uma varredura seeded em Vitest sem adicionar dependências.
 - 2026-11-19: a validação funcional atual passou (`npm run lint`, `npm run typecheck`, `npm test`, `npm run build` e `npm run format:check`), com 19 testes aprovados.
 - 2026-11-19: a entrega ainda não pode ser marcada como `0.1.0`: o controller mantém cinco nós lógicos em um processo, a persistência ainda cobre principalmente a máquina KV, as páginas operacionais além de Cluster são shell, e Storybook/Testing Library/Playwright continuam pendentes.
+- 2026-11-19: o laboratório visual browser-only foi validado com build estático e 21 testes; a demo Pages não inclui o controller local, portanto os controles `cluster:dev` exigem execução local.

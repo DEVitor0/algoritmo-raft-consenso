@@ -1,9 +1,10 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-import path from 'path'
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import path from 'path';
 
 export default defineConfig({
   plugins: [react()],
+  base: process.env.GITHUB_ACTIONS ? '/algoritmo-raft-consenso/' : '/',
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
@@ -15,7 +16,7 @@ export default defineConfig({
       '@types': path.resolve(__dirname, './src/types'),
       '@theme': path.resolve(__dirname, './src/theme'),
       '@config': path.resolve(__dirname, './src/config'),
-    }
+    },
   },
   server: {
     port: 3000,
@@ -23,8 +24,8 @@ export default defineConfig({
       '/api': {
         target: 'http://localhost:1098',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, '')
-      }
-    }
-  }
-})
+        rewrite: (path) => path.replace(/^\/api/, ''),
+      },
+    },
+  },
+});

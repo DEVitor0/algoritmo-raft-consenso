@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 620">
+  <rect width="1200" height="620" fill="#091018"/>
+  <text x="54" y="58" fill="#6de0bd" font-family="sans-serif" font-size="16" letter-spacing="3">RAFT / LABORATÓRIO VISUAL</text>
+  <text x="54" y="96" fill="#ebf3fb" font-family="sans-serif" font-size="31" font-weight="700">Consenso distribuído, passo a passo</text>
+  <rect x="54" y="130" width="1092" height="420" rx="8" fill="#0d1823" stroke="#263b4e"/>
+  <circle cx="600" cy="340" r="152" fill="none" stroke="#29465d" stroke-dasharray="7 8"/>
+  <g font-family="sans-serif" text-anchor="middle">
+    <g><circle cx="600" cy="190" r="55" fill="#152b3c" stroke="#6de0bd" stroke-width="3"/><text x="600" y="184" fill="#ebf3fb" font-size="22">n1</text><text x="600" y="207" fill="#6de0bd" font-size="12">LEADER</text></g>
+    <g><circle cx="744" cy="295" r="55" fill="#152b3c" stroke="#57718a" stroke-width="3"/><text x="744" y="289" fill="#ebf3fb" font-size="22">n2</text><text x="744" y="312" fill="#82b8ff" font-size="12">FOLLOWER</text></g>
+    <g><circle cx="689" cy="465" r="55" fill="#152b3c" stroke="#57718a" stroke-width="3"/><text x="689" y="459" fill="#ebf3fb" font-size="22">n3</text><text x="689" y="482" fill="#82b8ff" font-size="12">FOLLOWER</text></g>
+    <g><circle cx="511" cy="465" r="55" fill="#152b3c" stroke="#e7bd72" stroke-width="3"/><text x="511" y="459" fill="#ebf3fb" font-size="22">n4</text><text x="511" y="482" fill="#e7bd72" font-size="12">CANDIDATE</text></g>
+    <g><circle cx="456" cy="295" r="55" fill="#152b3c" stroke="#57718a" stroke-width="3"/><text x="456" y="289" fill="#ebf3fb" font-size="22">n5</text><text x="456" y="312" fill="#82b8ff" font-size="12">FOLLOWER</text></g>
+  </g>
+  <g fill="#82b8ff"><circle cx="670" cy="240" r="6"/><circle cx="710" cy="380" r="6"/><circle cx="536" cy="385" r="6"/></g>
+  <text x="78" y="525" fill="#91a5b8" font-family="sans-serif" font-size="13">SIMULAÇÃO DETERMINÍSTICA · seed 42 · invariantes em tempo real</text>
+</svg>

@@ -1,5 +1,12 @@
 # Raft Consensus Lab
 
+![Prévia do laboratório visual](packages/dashboard/public/raft-lab-preview.svg)
+
+**Demo estática:** [devitor0.github.io/algoritmo-raft-consenso](https://devitor0.github.io/algoritmo-raft-consenso/)
+
+> A demo do GitHub Pages executa a simulação Raft inteiramente no navegador. O modo
+> `cluster:dev` continua sendo local, pois requer o controller HTTP.
+
 Laboratório de engenharia para estudar consenso distribuído com um cluster Raft real,
 uma máquina de estados chave-valor, persistência WAL, cliente, simulador determinístico
 e dashboard operacional.
