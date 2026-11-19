@@ -241,13 +241,13 @@ select:hover {
 
 .election-event {
   position: absolute;
-  z-index: 4;
-  top: 16px;
+  z-index: 8;
+  top: 8px;
   left: 50%;
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 7px 11px;
+  padding: 6px 11px;
   transform: translateX(-50%);
   border: 1px solid rgba(240, 198, 116, 0.5);
   border-radius: 999px;
@@ -1169,8 +1169,9 @@ select {
   place-items: center;
   width: 32px;
   height: 32px;
-  border: 3px solid #454c54;
+  border: 0;
   border-radius: 50%;
+  background: transparent;
   color: #454c54;
   font-size: 20px;
 }
@@ -2056,5 +2057,407 @@ select,
 @keyframes confirmed-breath {
   50% {
     box-shadow: 0 0 0 4px rgba(244, 126, 85, 0.08);
+  }
+}
+
+.network-map .election-event {
+  top: 6px;
+  z-index: 12;
+  white-space: nowrap;
+}
+
+.time-rail .time-icon {
+  border: 0;
+  outline: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+@media (max-width: 480px) {
+  .network-map .election-event {
+    top: 4px;
+    max-width: calc(100% - 16px);
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+/* Responsive layout for compact laptops, tablets, phones and zoomed viewports. */
+html,
+body,
+#root {
+  width: 100%;
+  overflow-x: hidden;
+}
+
+button,
+input,
+select {
+  max-width: 100%;
+}
+
+@media (min-width: 1440px) {
+  .lab-shell {
+    padding-inline: 56px;
+  }
+
+  .network-map {
+    height: 540px;
+  }
+}
+
+@media (max-width: 1200px) {
+  .lab-shell {
+    padding-inline: 24px;
+  }
+
+  .dashboard-grid {
+    grid-template-columns: minmax(0, 1.08fr) minmax(340px, 0.92fr);
+  }
+
+  .network-map {
+    height: 440px;
+  }
+
+  .node-card {
+    width: 102px;
+    min-height: 102px;
+  }
+}
+
+@media (max-width: 980px) {
+  .lab-shell {
+    padding: 0 18px 44px;
+  }
+
+  .lab-header {
+    align-items: flex-start;
+  }
+
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .network-map {
+    height: 460px;
+  }
+
+  .log-matrix {
+    overflow-x: hidden;
+  }
+
+  .matrix-header,
+  .matrix-body {
+    min-width: 390px;
+  }
+
+  .log-matrix {
+    overflow-x: auto;
+  }
+
+  .lower-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .guided-tutorial {
+    right: 18px;
+    bottom: 18px;
+  }
+}
+
+@media (max-width: 720px) {
+  .lab-shell {
+    padding: 0 12px 32px;
+  }
+
+  .lab-header {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 20px 0 17px;
+  }
+
+  h1 {
+    font-size: clamp(24px, 8vw, 34px);
+  }
+
+  .subtitle {
+    font-size: 13px;
+  }
+
+  .mode-switch {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .mode-switch button {
+    min-width: 0;
+    padding-inline: 7px;
+    font-size: 11px;
+    white-space: normal;
+  }
+
+  .controls {
+    display: grid;
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .controls label,
+  .controls select,
+  .controls .control-group {
+    width: 100%;
+  }
+
+  .controls label {
+    justify-content: space-between;
+  }
+
+  .controls select,
+  .controls input[type='number'] {
+    min-width: 0;
+  }
+
+  .control-group,
+  .node-actions,
+  .form-row {
+    width: 100%;
+  }
+
+  .form-row input,
+  .form-row button {
+    flex: 1 1 120px;
+  }
+
+  .visual-panel {
+    padding: 12px;
+  }
+
+  .visual-panel .panel-title {
+    align-items: flex-start;
+  }
+
+  .simulation-badge {
+    max-width: 145px;
+    text-align: right;
+  }
+
+  .network-map {
+    height: clamp(330px, 82vw, 420px);
+  }
+
+  .network-map::before {
+    inset: 16%;
+  }
+
+  .network-center {
+    width: 88px;
+    height: 88px;
+  }
+
+  .node-card {
+    width: clamp(76px, 21vw, 92px);
+    min-height: clamp(76px, 21vw, 92px);
+    border-width: 3px;
+    padding: 7px;
+  }
+
+  .node-card strong {
+    font-size: clamp(14px, 4vw, 17px);
+  }
+
+  .node-card .node-role {
+    font-size: 8px;
+  }
+
+  .node-card small {
+    font-size: 7px;
+  }
+
+  .network-legend,
+  .replication-summary {
+    gap: 8px 12px;
+    flex-wrap: wrap;
+  }
+
+  .summary-state {
+    width: 100%;
+  }
+
+  .log-matrix {
+    padding: 12px;
+  }
+
+  .matrix-header,
+  .matrix-body {
+    min-width: 380px;
+  }
+
+  .time-rail {
+    display: grid;
+    grid-template-columns: 32px minmax(0, 1fr) auto;
+    gap: 9px;
+    padding: 12px;
+  }
+
+  .time-track {
+    min-width: 0;
+  }
+
+  .time-play,
+  .time-step {
+    grid-row: 2;
+  }
+
+  .time-play {
+    grid-column: 1 / 3;
+  }
+
+  .time-step {
+    grid-column: 3;
+  }
+
+  .speed-badge {
+    grid-column: 3;
+    grid-row: 1;
+  }
+
+  .lower-grid {
+    gap: 12px;
+  }
+
+  .panel-title {
+    flex-wrap: wrap;
+  }
+
+  .guided-tutorial {
+    right: 12px;
+    bottom: 12px;
+    left: 12px;
+    width: auto;
+  }
+
+  .tutorial-complete {
+    right: 12px;
+    bottom: 12px;
+    left: 12px;
+  }
+
+  .intro-card {
+    max-height: calc(100dvh - 24px);
+    overflow-y: auto;
+  }
+}
+
+@media (max-width: 480px) {
+  .lab-shell {
+    padding-inline: 8px;
+  }
+
+  .lab-header {
+    border-radius: 0;
+  }
+
+  .eyebrow {
+    font-size: 9px;
+  }
+
+  .mode-switch {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .mode-switch .tutorial-button {
+    grid-column: 1 / -1;
+  }
+
+  .network-map {
+    height: 330px;
+  }
+
+  .network-map::before {
+    inset: 19%;
+  }
+
+  .network-center {
+    width: 72px;
+    height: 72px;
+  }
+
+  .network-center strong {
+    font-size: 17px;
+  }
+
+  .node-card {
+    width: 72px;
+    min-height: 72px;
+  }
+
+  .node-card small {
+    display: none;
+  }
+
+  .network-legend {
+    font-size: 9px;
+  }
+
+  .replication-summary {
+    font-size: 9px;
+  }
+
+  .panel,
+  .visual-panel,
+  .log-matrix {
+    border-radius: 8px;
+  }
+
+  .form-row input {
+    flex-basis: 100%;
+  }
+
+  .intro-card {
+    padding: 22px 18px;
+  }
+
+  .intro-card h2 {
+    font-size: 25px;
+  }
+
+  .intro-actions {
+    display: grid;
+  }
+
+  .intro-actions button {
+    width: 100%;
+  }
+
+  .guided-tutorial {
+    padding: 13px;
+  }
+
+  .guided-tutorial p {
+    max-height: 48px;
+    overflow: hidden;
+  }
+}
+
+@media (max-height: 650px) and (orientation: landscape) {
+  .tutorial-backdrop {
+    align-items: start;
+    overflow-y: auto;
+  }
+
+  .intro-card {
+    margin: 12px 0;
+  }
+
+  .network-map {
+    height: 340px;
+  }
+
+  .guided-tutorial {
+    max-height: 180px;
+    overflow-y: auto;
   }
 }
