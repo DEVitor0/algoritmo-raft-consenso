@@ -22,7 +22,7 @@
 - [x] Substituir o ponto de entrada do Grunt por scripts com tsup.
 - [x] Configurar ESLint, Prettier e Vitest.
 - [x] Configurar GitHub Actions para lint, tipos, testes unitários/propriedades e build.
-- [ ] Remover os diretórios legados e dependências que ainda não são usados.
+- [x] Remover os diretórios legados e dependências que ainda não são usados.
 
 ## Fase 1 — `packages/raft-core`
 

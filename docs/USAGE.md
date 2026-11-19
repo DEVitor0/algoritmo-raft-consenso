@@ -1,5 +1,7 @@
 # Guia de Uso
 
+> Este guia descreve controles visuais e dados simulados. Os estados, métricas e resultados de falha não representam um cluster Raft real.
+
 ## Iniciando o Sistema
 
 ### Modo Desenvolvimento Local
@@ -41,7 +43,7 @@ A interface web oferece controle completo sobre o cluster.
 #### Visão Geral do Cluster
 
 - Status geral (líder, nós ativos, termo atual)
-- Métricas em tempo real
+- Métricas simuladas atualizadas pelo servidor
 - Gráficos de latência e throughput
 
 #### Gerenciamento de Nós
@@ -151,7 +153,7 @@ Resposta:
 {
   "metrics": {
     "latency": [12, 15, 18, 14, 16],
-    "throughput": [5234, 5456, 5123, 5678, 5345],
+    "throughput": [5234, 5456, 5123, 5678, 5345], // valores ilustrativos/simulados
     "memoryUsage": [45.2, 46.1, 45.8, 46.3, 45.9],
     "cpuUsage": [23.4, 25.1, 22.8, 24.5, 23.9],
     "networkIO": [1.2, 1.3, 1.1, 1.4, 1.2],
@@ -249,8 +251,8 @@ curl -X POST http://localhost:1098/api/raft/simulation/kill \
 **Comportamento Esperado**:
 - Nó3 para de responder
 - Heartbeats falham
-- Se era líder: nova eleição ocorre
-- Cluster continua operando com 4 nós
+- Se era líder: o painel mostra uma mudança simulada de líder
+- A interface continua mostrando 4 nós ativos
 
 ### Simular Partição de Rede
 
@@ -277,11 +279,11 @@ curl -X POST http://localhost:1098/api/raft/simulation/revive \
   -d '{"nodeId": "node3"}'
 ```
 
-**Comportamento Esperado**:
-- Nó3 reinicia
-- Sincroniza logs com líder
-- Retorna ao estado Follower
-- Cluster volta ao normal com 5 nós
+**Comportamento da Simulação**:
+- Nó3 muda visualmente para o estado reiniciado
+- A interface representa uma possível sincronização
+- O nó retorna visualmente ao estado Follower
+- O painel volta a mostrar 5 nós
 
 ### Heal Partição
 
@@ -322,7 +324,7 @@ Resposta:
   "totalRequests": 123456,
   "successfulRequests": 123450,
   "failedRequests": 6,
-  "throughput": 2057.5,
+  "throughput": 2057.5, // valor ilustrativo/simulado
   "avgLatency": 12.3,
   "p50Latency": 10.5,
   "p95Latency": 18.2,

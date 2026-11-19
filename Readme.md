@@ -1,11 +1,31 @@
 <div align="center">
   <img src="docs/image/solo.png" alt="Raft Logo" width="150" />
-  <h1>The Raft Consensus Algorithm</h1>
+  <h1>Simulador Visual do Algoritmo Raft</h1>
 </div>
 
 ## Sobre o Projeto
 
-Este projeto fornece uma implementação em TypeScript do protocolo de consenso Raft, acompanhada por um painel de simulação web. A implementação segue a especificação original, cobrindo eleição de líder, replicação de logs e tolerância a falhas. O painel permite visualizar em tempo real o estado do cluster, os logs de cada nó e a troca de mensagens, além de possibilitar a injeção controlada de falhas para observação do comportamento do sistema.
+Este projeto é um **simulador visual e didático do algoritmo de consenso Raft**, desenvolvido em TypeScript. Ele mostra em uma interface web conceitos como nós, líderes, logs e estados de falha para facilitar o estudo do Raft.
+
+O funcionamento exibido no painel é uma representação visual gerada pelo projeto. O projeto não é atualmente uma implementação distribuída e real do protocolo Raft.
+
+## O que o projeto faz
+
+- Exibe uma representação visual de nós de um cluster.
+- Permite visualizar estados como líder, seguidor e candidato.
+- Permite simular a queda ou reinício de nós.
+- Permite simular partições de rede e lentidão de nós.
+- Exibe logs, termos e métricas ilustrativas no dashboard.
+- Gera dados aleatórios para ajudar a observar diferentes estados da interface.
+
+## Status e limitações
+
+- As métricas de latência, throughput, CPU e memória são **simuladas**.
+- Os dados exibidos não representam medições reais de desempenho.
+- A eleição de líder do painel usa uma escolha aleatória e não implementa o protocolo RequestVote.
+- A replicação exibida não utiliza AppendEntries entre nós reais.
+- Os cinco nós são fixos no código de simulação.
+- Um motor Raft real, com eleição por timeout aleatório, replicação via AppendEntries e tolerância a falhas distribuída, está planejado, mas ainda não foi implementado.
 
 ### Documentação Oficial
 
@@ -27,12 +47,11 @@ Para aprofundamento teórico sobre o algoritmo Raft, consulte a documentação o
 
 ## Características Principais
 
-- **Eleição de Líder**: Implementação do mecanismo de eleição distribuída
-- **Replicação de Logs**: Sistema de replicação com garantia de consistência
-- **Simulação de Falhas**: Ferramentas para testar partições de rede e recuperação de nós
-- **Dashboard Interativo**: Interface web para monitoramento e controle do cluster
-- **Métricas em Tempo Real**: Visualização de latência, throughput e uso de recursos
-- **Testes de Performance**: Ferramentas integradas para benchmarking
+- **Visualização de Estados**: Interface web com representação de líder, seguidores e candidatos
+- **Simulação de Falhas**: Ferramentas visuais para representar quedas de nós e partições de rede
+- **Dashboard Interativo**: Interface web para observar estados e logs simulados
+- **Métricas Ilustrativas**: Visualização de latência, throughput e recursos gerados aleatoriamente
+- **Testes Visuais de Carga**: Controles didáticos que alteram valores simulados
 - **Containerização**: Ambiente completamente dockerizado para facilitar experimentação
 
 ---
@@ -93,7 +112,7 @@ Para instruções detalhadas, consulte o [Guia de Instalação](docs/INSTALLATIO
 │   ├── models/           # Interfaces e tipos
 │   ├── providers/        # Implementações de serviços
 │   └── utils/            # Utilitários compartilhados
-├── raftNode/             # Implementação do algoritmo Raft
+├── raftNode/             # Estruturas e lugares reservados para o futuro motor Raft
 │   ├── models/          # Estruturas de dados do Raft
 │   └── providers/       # Eleição e replicação
 ├── machineDiscovery/     # Descoberta de nós

@@ -1,5 +1,7 @@
 # Visão Geral do Algoritmo Raft
 
+> Esta página explica o algoritmo Raft em termos teóricos. Ela não descreve recursos já implementados pelo simulador deste repositório.
+
 ## Introdução
 
 Raft é um algoritmo de consenso projetado para ser mais compreensível que o Paxos, mantendo a mesma eficácia. Ele resolve o problema fundamental de consenso em sistemas distribuídos: fazer um conjunto de máquinas concordarem sobre um valor ou sequência de operações, mesmo quando algumas falham.
@@ -149,11 +151,11 @@ Em caso de partição:
 
 ---
 
-## Otimizações Implementadas
+## Otimizações Planejadas
 
 ### Log Compaction
 
-Logs crescem indefinitamente. A solução implementada:
+Logs podem crescer indefinitamente em uma implementação real. Uma versão futura pode usar:
 
 - Snapshots periódicos do estado
 - Descarte de entradas antigas
@@ -161,7 +163,7 @@ Logs crescem indefinitamente. A solução implementada:
 
 ### Pipelining
 
-Para melhorar throughput:
+Uma implementação real pode melhorar o throughput com:
 
 - Leader envia múltiplas AppendEntries sem aguardar confirmação
 - Followers processam em paralelo
@@ -169,7 +171,7 @@ Para melhorar throughput:
 
 ### Batch Processing
 
-Otimização de escrita:
+Uma implementação real pode usar otimizações de escrita:
 
 - Agrupa múltiplos comandos em uma entrada
 - Reduz overhead de replicação

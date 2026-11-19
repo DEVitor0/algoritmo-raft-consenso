@@ -1,5 +1,7 @@
 # API Reference
 
+> Os endpoints deste projeto gerenciam um simulador visual. Métricas, líderes, logs e históricos são representações simuladas e não medem ou implementam consenso Raft distribuído.
+
 ## Base URL
 
 ```
@@ -279,7 +281,7 @@ curl "http://localhost:1098/api/raft/metrics?window=60"
 {
   "metrics": {
     "latency": [12, 15, 18, 14, 16, 13, 17, 15, 14, 16],
-    "throughput": [5234, 5456, 5123, 5678, 5345, 5567, 5423, 5612, 5389, 5501],
+    "throughput": [5234, 5456, 5123, 5678, 5345, 5567, 5423, 5612, 5389, 5501], // valores ilustrativos/simulados
     "memoryUsage": [45.2, 46.1, 45.8, 46.3, 45.9, 46.0, 45.7, 46.2, 45.8, 46.1],
     "cpuUsage": [23.4, 25.1, 22.8, 24.5, 23.9, 24.2, 23.6, 24.8, 23.7, 24.3],
     "networkIO": [1.2, 1.3, 1.1, 1.4, 1.2, 1.3, 1.2, 1.4, 1.2, 1.3],
@@ -504,7 +506,7 @@ Teste de throughput.
   "totalRequests": 123456,
   "successfulRequests": 123450,
   "failedRequests": 6,
-  "throughput": 2057.5,
+  "throughput": 2057.5, // valor ilustrativo/simulado
   "avgLatency": 12.3,
   "minLatency": 5.2,
   "maxLatency": 156.7,

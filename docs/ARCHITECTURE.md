@@ -1,8 +1,10 @@
 # Arquitetura do Sistema
 
+> Este documento descreve a estrutura atual do simulador e os componentes planejados para um futuro motor Raft. Os dados e estados exibidos são representações simuladas.
+
 ## Visão Geral
 
-Este projeto implementa uma arquitetura modular e escalável do algoritmo Raft, dividida em camadas bem definidas que separam responsabilidades e facilitam manutenção.
+Este projeto usa uma estrutura modular para apresentar um simulador visual e didático do algoritmo Raft. Os componentes deixam reservado o local onde um motor Raft real poderá ser implementado.
 
 ---
 
@@ -33,7 +35,7 @@ RaftTs-main/
 │   │   ├── queue/          # Gerenciamento de filas
 │   │   └── streams/        # Produtores e consumidores
 │   └── utils/               # Utilitários compartilhados
-├── raftNode/                # Implementação do Raft
+├── raftNode/                # Estruturas e providers planejados do Raft
 │   ├── models/             # Estruturas de dados
 │   │   ├── Node.ts         # Atributos do nó
 │   │   ├── LeaderElection.ts
@@ -87,21 +89,17 @@ RaftTs-main/
 
 ### 2. Camada de Consenso (Consensus Layer)
 
-**Responsabilidade**: Implementação do algoritmo Raft.
+**Responsabilidade**: Local reservado para a implementação futura do algoritmo Raft.
 
 **Componentes**:
 
 - **LeaderElectionProvider**
-  - Gerenciamento de eleições
-  - Controle de timeouts
-  - Votação distribuída
-  - Transição de estados (Follower → Candidate → Leader)
+  - Atualmente vazio; a eleição exibida na API é sorteada pelo simulador
+  - Implementação futura: timeouts, votos RequestVote e estados Follower → Candidate → Leader
 
 - **LogReplicationProvider**
-  - Replicação de entradas
-  - Verificação de consistência
-  - Commit de entradas
-  - Aplicação à máquina de estados
+  - Atualmente vazio; os logs exibidos são dados simulados
+  - Implementação futura: AppendEntries, consistência, quorum e commit
 
 - **Node Models**
   - NodeState: Status atual do nó
@@ -245,39 +243,35 @@ class NodeFactory {
 
 ## Comunicação Entre Componentes
 
-### Fluxo de Eleição
+### Fluxo de Eleição Exibido pelo Simulador
 
 ```
-1. Follower timeout expira
-2. LeaderElectionProvider inicia eleição
-3. SocketRouterProvider envia RequestVote
-4. Nós respondem com votos
-5. Maioria alcançada
-6. Estado atualizado para Leader
-7. Observadores notificados
+1. O endpoint de simulação incrementa o termo
+2. Os estados dos nós são alterados em memória
+3. Um líder é escolhido aleatoriamente
+4. O dashboard recebe o novo estado
+
+Isso não representa uma eleição Raft distribuída real.
 ```
 
-### Fluxo de Replicação
+### Fluxo de Replicação Exibido pelo Simulador
 
 ```
-1. Cliente → HTTP POST /api/raft/command
-2. RaftRoute → LogReplicationProvider.appendEntry()
-3. Leader adiciona ao log local
-4. SocketRouterProvider.broadcast(AppendEntries)
-5. Followers recebem e replicam
-6. Followers enviam confirmação
-7. Maioria confirmada → entrada committed
-8. RaftRoute responde ao cliente
+1. Cliente envia um comando ao endpoint
+2. Uma entrada é adicionada à lista em memória
+3. O status muda de Pending para Committed após um atraso artificial
+4. O dashboard recebe o estado atualizado
+
+Não há AppendEntries nem replicação entre processos reais.
 ```
 
 ### Fluxo de Monitoramento
 
 ```
-1. Dashboard → Polling /api/raft/metrics (2s)
-2. RaftRoute coleta dados dos nós
-3. Métricas agregadas e formatadas
-4. Response JSON enviado
-5. Dashboard atualiza gráficos
+1. Dashboard consulta o endpoint de métricas
+2. RaftRoute gera valores aleatórios simulados
+3. Os valores são enviados ao dashboard
+4. Os gráficos são atualizados
 ```
 
 ---
@@ -290,7 +284,7 @@ class NodeFactory {
 - Além de 7 nós: considerar múltiplos clusters
 - Load balancer (HAProxy) distribui leituras
 
-### Otimizações Implementadas
+### Otimizações não implementadas neste simulador
 
 1. **Connection Pooling**: Reutilização de conexões ZeroMQ
 2. **Batch Processing**: Agrupamento de comandos
@@ -298,14 +292,14 @@ class NodeFactory {
 4. **Caching**: Redis para dados frequentes
 5. **Compressão**: Logs e snapshots comprimidos
 
-### Métricas de Performance
+### Métricas ilustrativas
 
-Esperadas em hardware modesto (4 cores, 8GB RAM):
+Os seguintes intervalos são apenas exemplos gerados pelo código de demonstração:
 
-- **Latência de escrita**: 10-50ms
-- **Throughput**: 5.000-10.000 ops/s
-- **Tempo de eleição**: 500ms-1s
-- **Recovery time**: < 2s
+- **Latência simulada**: 10-60ms
+- **Throughput simulado**: 500-1.500 ops/s
+- **Uso de memória simulada**: 40-60%
+- **Uso de CPU simulado**: 20-50%
 
 ---
 

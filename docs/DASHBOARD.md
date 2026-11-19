@@ -1,8 +1,10 @@
 # Dashboard - Guia de Uso
 
+> Todos os estados, métricas e controles deste dashboard são simulações. Eles não representam medições reais nem um motor Raft distribuído.
+
 ## Visão Geral
 
-O dashboard oferece interface web completa para monitoramento e controle do cluster Raft. Desenvolvido em React com Material-UI, fornece visualização em tempo real e ferramentas de simulação.
+O dashboard oferece uma interface web para visualização e controle de um simulador didático do Raft. Desenvolvido em React com Material-UI, ele apresenta estados simulados e ferramentas visuais de falha.
 
 **Acesso**: `http://localhost:3000`
 
@@ -22,7 +24,7 @@ Página principal com resumo do estado do cluster.
   - Número de nós ativos
   - Termo atual
 
-- **Gráficos em Tempo Real**
+- **Gráficos simulados atualizados periodicamente**
   - Latência de operações (ms)
   - Throughput (ops/segundo)
   - Uso de CPU (%)
@@ -69,7 +71,7 @@ Visualização detalhada de cada nó do cluster.
 
 ### 3. Visualizador de Logs
 
-Inspeção do log replicado do Raft.
+Inspeção visual de entradas simuladas de log.
 
 **Funcionalidades**:
 
@@ -145,8 +147,8 @@ Ferramentas para testar comportamento do cluster.
 **Matar Nó**:
 1. Selecione o nó
 2. Clique em "Matar Nó"
-3. Observe eleição automática
-4. Cluster continua operando
+3. Observe a mudança visual simulada de líder
+4. A interface continua exibindo o estado do cluster
 
 **Reiniciar Nó**:
 1. Selecione nó morto
@@ -185,7 +187,7 @@ Ferramentas para testar comportamento do cluster.
 
 ### 6. Testes de Performance
 
-Suite de benchmarking integrada.
+Visualização de testes de carga simulados.
 
 #### Teste de Throughput
 
