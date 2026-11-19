@@ -45,7 +45,7 @@ export const formatDateTime = (timestamp: number): string => {
 };
 
 export const generateId = (): string => {
-  return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  return `${Date.now()}-${crypto.randomUUID()}`;
 };
 
 export const calculatePercentile = (values: number[], percentile: number): number => {

@@ -108,16 +108,23 @@ export class InMemoryTransport<T = unknown> implements Transport<T> {
 }
 
 import type { RaftNodeOptions as CoreRaftNodeOptions } from "@raft/raft-core";
+import { RequestMetrics, defaultLogger, type StructuredLogger } from "./observability.js";
+export { RequestMetrics, createJsonLogger, DEFAULT_LATENCY_BUCKETS } from "./observability.js";
+export type { HistogramSnapshot, StructuredLogger } from "./observability.js";
 export interface RaftNodeOptions extends CoreRaftNodeOptions<KVCommand> {
   walPath?: string;
   store?: KVStore;
+  logger?: StructuredLogger;
 }
 export class RaftNode {
   readonly store: KVStore;
   readonly raft: CoreRaftNode<KVCommand>;
+  readonly metrics = new RequestMetrics();
+  readonly logger: StructuredLogger;
   private server: Server | undefined;
   constructor(options: RaftNodeOptions) {
     this.store = options.store ?? new KVStore(options.walPath ? new JsonlWal(options.walPath) : undefined);
+    this.logger = options.logger ?? defaultLogger();
     this.raft = new CoreRaftNode({ ...options, apply: command => this.store.apply(command) });
   }
   async start() { await this.store.recover(); }
@@ -135,7 +142,11 @@ export class RaftNode {
     this.server = undefined;
   }
   get role() { return this.raft.state.role; }
+  get id() { return this.raft.id; }
   get leaderId() { return this.raft.state.role === "follower" ? this.raft.state.leaderId : this.raft.state.role === "leader" ? this.raft.id : null; }
+  get metricsState() {
+    return { id: this.raft.id, role: this.role, term: this.raft.currentTerm, commitIndex: this.raft.commitIndex, lastApplied: this.raft.lastApplied, logLength: this.raft.log.length };
+  }
   propose(command: KVCommand) {
     if (this.raft.state.role !== "leader") return { accepted: false, leaderId: this.leaderId };
     return { accepted: true, entry: this.raft.propose(command) };
@@ -160,6 +171,9 @@ export function createHttpTransport(base: string): Transport<KVCommand> {
 }
 export function createHttpServer(node: RaftNode): Server {
   return createServer(async (req, res) => {
+    const started = process.hrtime.bigint();
+    const method = req.method ?? "GET";
+    const pathname = new URL(req.url ?? "/", "http://localhost").pathname;
     try {
       const url = new URL(req.url ?? "/", "http://localhost");
       if (req.method === "POST" && ["/raft", "/raft/request-vote", "/raft/append-entries"].includes(url.pathname)) {
@@ -170,12 +184,27 @@ export function createHttpServer(node: RaftNode): Server {
         const key = url.searchParams.get("key"); if (!key) return json(req, res, 400, { error: "key required" });
         return json(req, res, 200, { ok: true, value: node.store.get(key), leaderId: node.leaderId });
       }
+      if (req.method === "GET" && url.pathname === "/metrics") {
+        res.statusCode = 200;
+        res.setHeader("content-type", "text/plain; version=0.0.4; charset=utf-8");
+        res.end(node.metrics.render(node.metricsState));
+        return;
+      }
       if (req.method === "POST" && url.pathname === "/kv") {
         const result = node.propose(await body(req)); if (!result.accepted) return json(req, res, 307, result);
         return json(req, res, 202, result);
       }
       json(req, res, 404, { error: "not_found" });
-    } catch (e) { json(req, res, 400, { error: (e as Error).message }); }
+    } catch (e) {
+      node.logger.error("http_request_failed", { method, path: pathname, error: (e as Error).message });
+      json(req, res, 400, { error: (e as Error).message });
+    } finally {
+      if (pathname !== "/metrics") {
+        const durationMs = Number(process.hrtime.bigint() - started) / 1e6;
+        node.metrics.increment("raft_http_requests_total", { method, path: pathname, status: String(res.statusCode) });
+        node.metrics.observe("raft_http_request_duration_milliseconds", durationMs, { method, path: pathname });
+      }
+    }
   });
 }
 export const createFastifyServer = createHttpServer;

@@ -3,6 +3,49 @@ import fc from 'fast-check';
 import { DeterministicSimulator, SCENARIOS } from './simulator.js';
 import { SeededPrng } from './seed.js';
 import { checkPerKeyLinearizable, type LinearOperation } from './linearizability.js';
+import { DevClusterController } from './cluster-dev.js';
+
+describe('local dev cluster controller', () => {
+  it('starts and snapshots five coherent node states', async () => {
+    const controller = new DevClusterController({ port: 0, tickMs: 10 });
+    await controller.startCluster();
+    const snapshot = controller.snapshot();
+    expect(snapshot.nodes).toHaveLength(5);
+    expect(snapshot.nodes.every((node) => node.state === 'running')).toBe(true);
+    expect(snapshot.nodes.map((node) => node.id)).toEqual(['n1', 'n2', 'n3', 'n4', 'n5']);
+    await controller.close();
+  });
+
+  it('safely stops and restarts individual nodes', async () => {
+    const controller = new DevClusterController({ port: 0 });
+    await controller.startCluster();
+
+    expect(await controller.stopNode('n3')).toBe(true);
+    expect(controller.snapshot().nodes.find((node) => node.id === 'n3')?.state).toBe('stopped');
+    expect(await controller.stopNode('n3')).toBe(false);
+
+    expect(await controller.restartNode('n3')).toBe(true);
+    expect(controller.snapshot().nodes.find((node) => node.id === 'n3')?.state).toBe('running');
+    await expect(controller.stopNode('missing')).rejects.toThrow('unknown node');
+    await controller.close();
+  });
+
+  it('exposes cluster snapshot and health over REST', async () => {
+    const controller = new DevClusterController({ port: 0 });
+    await controller.startCluster();
+    const actualPort = await controller.listen();
+
+    const clusterResponse = await fetch(`http://127.0.0.1:${actualPort}/api/cluster`);
+    expect(clusterResponse.status).toBe(200);
+    expect(await clusterResponse.json()).toMatchObject({ nodes: expect.any(Array) });
+
+    const healthResponse = await fetch(`http://127.0.0.1:${actualPort}/api/health`);
+    expect(healthResponse.status).toBe(200);
+    expect(await healthResponse.json()).toMatchObject({ ok: true });
+
+    await controller.close();
+  });
+});
 
 describe('deterministic chaos simulator', () => {
   it('produces byte-identifiable reports for the same seed', () => {
@@ -37,7 +80,10 @@ describe('deterministic chaos simulator', () => {
     fc.assert(
       fc.property(fc.integer({ min: 1, max: 10_000 }), (seed) => {
         const first = new DeterministicSimulator({ seed, scenario: 'isolated-leader' }).run(30, 10);
-        const second = new DeterministicSimulator({ seed, scenario: 'isolated-leader' }).run(30, 10);
+        const second = new DeterministicSimulator({ seed, scenario: 'isolated-leader' }).run(
+          30,
+          10,
+        );
         expect(JSON.stringify(first)).toBe(JSON.stringify(second));
       }),
       { numRuns: 100 },

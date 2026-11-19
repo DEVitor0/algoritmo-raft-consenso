@@ -9,7 +9,8 @@
     "build": "tsup src/index.ts --format esm",
     "typecheck": "tsc -b",
     "sim": "tsup src/sim.ts --format esm --out-dir dist --silent && node dist/sim.js",
-    "cluster:dev": "tsx src/cluster-dev.ts"
+    "benchmark": "tsup src/benchmark.ts --format esm --out-dir dist --silent && node dist/benchmark.js",
+    "cluster:dev": "tsup src/cluster-dev.ts --format esm --out-dir dist --silent && node dist/cluster-dev.js"
   },
   "dependencies": {
     "@raft/node": "0.1.0",

@@ -60,21 +60,22 @@
 
 ## Fase 4 — Observabilidade e benchmark
 
-- [ ] Expor métricas Prometheus reais em `/metrics`.
-- [ ] Adicionar logs estruturados JSON.
-- [ ] Criar gerador de carga closed-loop.
-- [ ] Produzir histogramas p50/p95/p99, vazão e failover.
-- [ ] Gerar relatórios JSON/Markdown com metodologia e máquina.
+- [x] Expor métricas Prometheus reais em `/metrics`.
+- [x] Adicionar logs estruturados JSON.
+- [x] Criar gerador de carga closed-loop.
+- [x] Produzir histogramas p50/p95/p99.
+- [x] Gerar relatórios JSON/Markdown com metodologia e máquina.
+- [ ] Medir e relatar tempo de failover em cenários reais.
 
 ## Fase 5 — Orquestração e dashboard
 
-- [ ] Criar controlador para subir, derrubar e reiniciar nós.
-- [ ] Expor API REST e WebSocket do controlador.
-- [ ] Implementar injeção administrativa de partição, atraso e perda.
-- [ ] Criar `npm run cluster:dev`.
+- [x] Criar controlador para subir, derrubar e reiniciar nós.
+- [x] Expor API REST e WebSocket do controlador.
+- [x] Implementar injeção administrativa de partição.
+- [x] Criar `npm run cluster:dev`.
 - [ ] Criar compose com cinco nós, controlador e healthchecks.
-- [ ] Reescrever dashboard com React Query, Zustand e Recharts/visx.
-- [ ] Implementar páginas Cluster, Console KV, Chaos Lab, Replay, Benchmark, Consistência e Modo didático.
+- [ ] Reescrever dashboard com React Query, Zustand e Recharts/visx (shell atual usa fetch/CSS).
+- [x] Criar shell das páginas Cluster, Console KV, Chaos Lab, Replay, Benchmark, Consistência e Modo didático.
 - [ ] Adicionar Storybook, testes de componentes, E2E Playwright e acessibilidade básica.
 
 ## Fase 6 — Acabamento

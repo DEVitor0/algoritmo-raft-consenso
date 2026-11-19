@@ -14,7 +14,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "sim": "npm --workspace @raft/chaos run sim --",
-    "cluster:dev": "npm --workspace @raft/chaos run cluster:dev"
+    "cluster:dev": "npm --workspace @raft/chaos run cluster:dev --",
+    "benchmark": "npm --workspace @raft/chaos run benchmark --"
   },
   "engines": {
     "node": ">=20"
