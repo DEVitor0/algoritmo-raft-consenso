@@ -30,10 +30,13 @@ const sections: Array<{ id: Section; label: string; icon: string }> = [
   { id: 'didactic', label: 'Didactic Mode', icon: '?' },
 ];
 
-const controllerUrl = (import.meta.env.VITE_RAFT_CONTROLLER_URL as string | undefined)?.replace(/\/$/, '') || '/api';
+const controllerUrl =
+  (import.meta.env.VITE_RAFT_CONTROLLER_URL as string | undefined)?.replace(/\/$/, '') || '/api';
 
 async function getCluster(): Promise<ClusterSnapshot> {
-  const response = await fetch(`${controllerUrl}/cluster`, { headers: { accept: 'application/json' } });
+  const response = await fetch(`${controllerUrl}/cluster`, {
+    headers: { accept: 'application/json' },
+  });
   if (!response.ok) throw new Error(`controller respondeu ${response.status}`);
   return response.json() as Promise<ClusterSnapshot>;
 }
@@ -48,11 +51,21 @@ function EmptyState({ message = 'cluster não está rodando' }: { message?: stri
   );
 }
 
-function ClusterPage({ snapshot, refresh }: { snapshot: ClusterSnapshot | null; refresh: () => void }) {
+function ClusterPage({
+  snapshot,
+  refresh,
+}: {
+  snapshot: ClusterSnapshot | null;
+  refresh: () => void;
+}) {
   const nodes = snapshot?.nodes ?? [];
   return (
     <>
-      <PageHeader title="Cluster" description="Estado observado diretamente do controller Raft." action={<button onClick={refresh}>Atualizar</button>} />
+      <PageHeader
+        title="Cluster"
+        description="Estado observado diretamente do controller Raft."
+        action={<button onClick={refresh}>Atualizar</button>}
+      />
       {snapshot ? (
         <div className="stack">
           <div className="metric-grid">
@@ -63,28 +76,90 @@ function ClusterPage({ snapshot, refresh }: { snapshot: ClusterSnapshot | null; 
           </div>
           <section className="panel">
             <h2>Membros</h2>
-            {nodes.length ? <NodeTable nodes={nodes} /> : <EmptyState message="nenhum nó reportado pelo controller" />}
+            {nodes.length ? (
+              <NodeTable nodes={nodes} />
+            ) : (
+              <EmptyState message="nenhum nó reportado pelo controller" />
+            )}
           </section>
         </div>
-      ) : <EmptyState />}
+      ) : (
+        <EmptyState />
+      )}
     </>
   );
 }
 
 function NodeTable({ nodes }: { nodes: NodeInfo[] }) {
-  return <div className="table-wrap"><table><thead><tr><th>ID</th><th>Função</th><th>Estado</th><th>Endereço</th></tr></thead><tbody>{nodes.map((node) => <tr key={node.id}><td className="mono">{node.id}</td><td>{node.role ?? '—'}</td><td><span className="status-dot" />{node.state ?? '—'}</td><td className="mono">{node.address ?? '—'}</td></tr>)}</tbody></table></div>;
+  return (
+    <div className="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Função</th>
+            <th>Estado</th>
+            <th>Endereço</th>
+          </tr>
+        </thead>
+        <tbody>
+          {nodes.map((node) => (
+            <tr key={node.id}>
+              <td className="mono">{node.id}</td>
+              <td>{node.role ?? '—'}</td>
+              <td>
+                <span className="status-dot" />
+                {node.state ?? '—'}
+              </td>
+              <td className="mono">{node.address ?? '—'}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
 }
 
 function Metric({ label, value }: { label: string; value: string | number }) {
-  return <div className="metric"><span>{label}</span><strong>{value}</strong></div>;
+  return (
+    <div className="metric">
+      <span>{label}</span>
+      <strong>{value}</strong>
+    </div>
+  );
 }
 
-function PageHeader({ title, description, action }: { title: string; description: string; action?: ReactNode }) {
-  return <header className="page-header"><div><p className="eyebrow">RAFT / OBSERVABILITY</p><h1>{title}</h1><p>{description}</p></div>{action}</header>;
+function PageHeader({
+  title,
+  description,
+  action,
+}: {
+  title: string;
+  description: string;
+  action?: ReactNode;
+}) {
+  return (
+    <header className="page-header">
+      <div>
+        <p className="eyebrow">RAFT / OBSERVABILITY</p>
+        <h1>{title}</h1>
+        <p>{description}</p>
+      </div>
+      {action}
+    </header>
+  );
 }
 
-function SectionPage({ section }: { section: typeof sections[number] }) {
-  return <><PageHeader title={section.label} description="Área preparada para dados e comandos do cluster real." /><EmptyState message="cluster não está rodando" /></>;
+function SectionPage({ section }: { section: (typeof sections)[number] }) {
+  return (
+    <>
+      <PageHeader
+        title={section.label}
+        description="Área preparada para dados e comandos do cluster real."
+      />
+      <EmptyState message="cluster não está rodando" />
+    </>
+  );
 }
 
 function App() {
@@ -104,20 +179,57 @@ function App() {
     }
   }, []);
 
-  useEffect(() => { void refresh(); }, [refresh]);
+  useEffect(() => {
+    void refresh();
+  }, [refresh]);
 
-  const activeSection = useMemo(() => sections.find((section) => section.id === active) ?? sections[0], [active]);
+  const activeSection = useMemo(
+    () => sections.find((section) => section.id === active) ?? sections[0],
+    [active],
+  );
 
   return (
     <div className="app-shell">
       <aside className="sidebar">
-        <div className="brand"><span className="brand-mark">R</span><div><strong>RAFT LAB</strong><small>cluster console</small></div></div>
-        <nav aria-label="Seções do dashboard">{sections.map((section) => <button key={section.id} className={section.id === active ? 'nav-item active' : 'nav-item'} onClick={() => setActive(section.id)}><span>{section.icon}</span>{section.label}</button>)}</nav>
-        <div className="sidebar-foot"><span className={offline ? 'connection offline' : 'connection'} />{offline ? 'Controller offline' : 'Controller conectado'}<small>{controllerUrl}</small></div>
+        <div className="brand">
+          <span className="brand-mark">R</span>
+          <div>
+            <strong>RAFT LAB</strong>
+            <small>cluster console</small>
+          </div>
+        </div>
+        <nav aria-label="Seções do dashboard">
+          {sections.map((section) => (
+            <button
+              key={section.id}
+              className={section.id === active ? 'nav-item active' : 'nav-item'}
+              onClick={() => setActive(section.id)}
+            >
+              <span>{section.icon}</span>
+              {section.label}
+            </button>
+          ))}
+        </nav>
+        <div className="sidebar-foot">
+          <span className={offline ? 'connection offline' : 'connection'} />
+          {offline ? 'Controller offline' : 'Controller conectado'}
+          <small>{controllerUrl}</small>
+        </div>
       </aside>
       <main className="main-content">
-        <div className="topbar"><span>Ambiente local</span><span>{lastUpdated ? `Atualizado ${lastUpdated.toLocaleTimeString()}` : 'Aguardando controller'}</span></div>
-        {active === 'cluster' ? <ClusterPage snapshot={snapshot} refresh={() => void refresh()} /> : <SectionPage section={activeSection} />}
+        <div className="topbar">
+          <span>Ambiente local</span>
+          <span>
+            {lastUpdated
+              ? `Atualizado ${lastUpdated.toLocaleTimeString()}`
+              : 'Aguardando controller'}
+          </span>
+        </div>
+        {active === 'cluster' ? (
+          <ClusterPage snapshot={snapshot} refresh={() => void refresh()} />
+        ) : (
+          <SectionPage section={activeSection} />
+        )}
       </main>
     </div>
   );

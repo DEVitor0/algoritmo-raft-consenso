@@ -100,12 +100,12 @@ npm run build
 
 ## Estrutura
 
-| Pacote | Responsabilidade |
-| --- | --- |
-| `packages/raft-core` | Máquina de consenso pura |
-| `packages/node` | Nó, KV, WAL, HTTP e observabilidade |
-| `packages/client` | Cliente KV com retry |
-| `packages/chaos` | Simulação, controller e benchmark |
-| `packages/dashboard` | Console web do cluster |
+| Pacote               | Responsabilidade                    |
+| -------------------- | ----------------------------------- |
+| `packages/raft-core` | Máquina de consenso pura            |
+| `packages/node`      | Nó, KV, WAL, HTTP e observabilidade |
+| `packages/client`    | Cliente KV com retry                |
+| `packages/chaos`     | Simulação, controller e benchmark   |
+| `packages/dashboard` | Console web do cluster              |
 
 Veja as decisões em [`docs/adr`](./docs/adr).

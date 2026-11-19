@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from 'vitest';
 import {
   RaftNode,
   type RaftMessage,
@@ -7,7 +7,7 @@ import {
   type PRNG,
   type NodeId,
   type LogEntry,
-} from "../src/index.js";
+} from '../src/index.js';
 
 class TestClock implements Clock {
   time = 0;
@@ -55,134 +55,146 @@ function deliver(
   nodes[envelope.to]!.receive(envelope.from, envelope.message);
 }
 
-describe("Raft core state machine", () => {
-  it("starts an election and becomes leader with a majority", () => {
+describe('Raft core state machine', () => {
+  it('starts an election and becomes leader with a majority', () => {
     const clock = new TestClock();
-    const transports = [new TestTransport<string>(), new TestTransport<string>(), new TestTransport<string>()];
-    const a = createNode("a", ["a", "b", "c"], clock, transports[0]!);
-    const b = createNode("b", ["a", "b", "c"], clock, transports[1]!);
-    const c = createNode("c", ["a", "b", "c"], clock, transports[2]!);
+    const transports = [
+      new TestTransport<string>(),
+      new TestTransport<string>(),
+      new TestTransport<string>(),
+    ];
+    const a = createNode('a', ['a', 'b', 'c'], clock, transports[0]!);
+    const b = createNode('b', ['a', 'b', 'c'], clock, transports[1]!);
+    const c = createNode('c', ['a', 'b', 'c'], clock, transports[2]!);
 
     clock.time = 11;
     a.tick();
-    expect(a.state.role).toBe("candidate");
+    expect(a.state.role).toBe('candidate');
     expect(a.currentTerm).toBe(1);
 
-    a.receive("b", {
-      type: "RequestVoteResponse",
+    a.receive('b', {
+      type: 'RequestVoteResponse',
       term: 1,
       voteGranted: true,
     });
-    a.receive("c", {
-      type: "RequestVoteResponse",
+    a.receive('c', {
+      type: 'RequestVoteResponse',
       term: 1,
       voteGranted: true,
     });
 
-    expect(a.state.role).toBe("leader");
+    expect(a.state.role).toBe('leader');
   });
 
-  it("grants votes only to an up-to-date candidate", () => {
+  it('grants votes only to an up-to-date candidate', () => {
     const clock = new TestClock();
     const transport = new TestTransport<string>();
-    const node = createNode("b", ["a", "b"], clock, transport, [
-      { term: 2, index: 1, command: "x" },
-      { term: 2, index: 2, command: "y" },
+    const node = createNode('b', ['a', 'b'], clock, transport, [
+      { term: 2, index: 1, command: 'x' },
+      { term: 2, index: 2, command: 'y' },
     ]);
 
-    node.receive("a", {
-      type: "RequestVote",
+    node.receive('a', {
+      type: 'RequestVote',
       term: 3,
-      candidateId: "a",
+      candidateId: 'a',
       lastLogIndex: 1,
       lastLogTerm: 2,
     });
     expect(transport.sent.at(-1)?.message).toMatchObject({
-      type: "RequestVoteResponse",
+      type: 'RequestVoteResponse',
       term: 3,
       voteGranted: false,
     });
 
-    node.receive("a", {
-      type: "RequestVote",
+    node.receive('a', {
+      type: 'RequestVote',
       term: 4,
-      candidateId: "a",
+      candidateId: 'a',
       lastLogIndex: 2,
       lastLogTerm: 2,
     });
     expect(transport.sent.at(-1)?.message).toMatchObject({
-      type: "RequestVoteResponse",
+      type: 'RequestVoteResponse',
       voteGranted: true,
     });
   });
 
-  it("replicates, commits only a majority, and applies a current-term entry", () => {
+  it('replicates, commits only a majority, and applies a current-term entry', () => {
     const clock = new TestClock();
     const ta = new TestTransport<string>();
     const tb = new TestTransport<string>();
     const tc = new TestTransport<string>();
     const applied: string[] = [];
-    const a = createNode("a", ["a", "b", "c"], clock, ta, [], (command) => applied.push(command));
-    const b = createNode("b", ["a", "b", "c"], clock, tb);
-    const c = createNode("c", ["a", "b", "c"], clock, tc);
+    const a = createNode('a', ['a', 'b', 'c'], clock, ta, [], (command) => applied.push(command));
+    const b = createNode('b', ['a', 'b', 'c'], clock, tb);
+    const c = createNode('c', ['a', 'b', 'c'], clock, tc);
     const nodes = { a, b, c };
 
     a.currentTerm = 1;
-    a.state = { role: "leader", nextIndex: { b: 1, c: 1 }, matchIndex: { a: 0, b: 0, c: 0 }, heartbeatDeadline: 0 };
-    const entry = a.append("set:x");
+    a.state = {
+      role: 'leader',
+      nextIndex: { b: 1, c: 1 },
+      matchIndex: { a: 0, b: 0, c: 0 },
+      heartbeatDeadline: 0,
+    };
+    const entry = a.append('set:x');
     expect(entry?.index).toBe(1);
 
     for (const envelope of ta.sent.splice(0)) deliver(nodes, envelope);
     // Deliver follower AppendEntriesResponses back to the leader.
     for (const envelope of [...tb.sent.splice(0), ...tc.sent.splice(0)]) {
-      if (envelope.message.type === "AppendEntriesResponse") deliver(nodes, envelope);
+      if (envelope.message.type === 'AppendEntriesResponse') deliver(nodes, envelope);
     }
 
     expect(a.commitIndex).toBe(1);
     expect(a.lastApplied).toBe(1);
-    expect(applied).toEqual(["set:x"]);
+    expect(applied).toEqual(['set:x']);
   });
 
-  it("rejects conflicting AppendEntries and then accepts leader entries", () => {
+  it('rejects conflicting AppendEntries and then accepts leader entries', () => {
     const clock = new TestClock();
     const ta = new TestTransport<string>();
     const tb = new TestTransport<string>();
-    const leader = createNode("a", ["a", "b"], clock, ta);
-    const follower = createNode("b", ["a", "b"], clock, tb, [
-      { term: 1, index: 1, command: "old" },
-      { term: 2, index: 2, command: "bad" },
+    const leader = createNode('a', ['a', 'b'], clock, ta);
+    const follower = createNode('b', ['a', 'b'], clock, tb, [
+      { term: 1, index: 1, command: 'old' },
+      { term: 2, index: 2, command: 'bad' },
     ]);
 
-    follower.receive("a", {
-      type: "AppendEntries",
+    follower.receive('a', {
+      type: 'AppendEntries',
       term: 3,
-      leaderId: "a",
+      leaderId: 'a',
       prevLogIndex: 1,
       prevLogTerm: 3,
-      entries: [{ term: 3, index: 2, command: "new" }],
+      entries: [{ term: 3, index: 2, command: 'new' }],
       leaderCommit: 2,
     });
-    expect(tb.sent.at(-1)?.message).toMatchObject({ type: "AppendEntriesResponse", success: false });
+    expect(tb.sent.at(-1)?.message).toMatchObject({
+      type: 'AppendEntriesResponse',
+      success: false,
+    });
 
-    follower.receive("a", {
-      type: "AppendEntries",
+    follower.receive('a', {
+      type: 'AppendEntries',
       term: 3,
-      leaderId: "a",
+      leaderId: 'a',
       prevLogIndex: 1,
       prevLogTerm: 1,
-      entries: [{ term: 3, index: 2, command: "new" }],
+      entries: [{ term: 3, index: 2, command: 'new' }],
       leaderCommit: 1,
     });
-    expect(follower.log.map((entry: LogEntry<string>) => entry.command)).toEqual(["old", "new"]);
+    expect(follower.log.map((entry: LogEntry<string>) => entry.command)).toEqual(['old', 'new']);
   });
 
-  it("exposes discriminated role state and uses heartbeat/leader state", () => {
+  it('exposes discriminated role state and uses heartbeat/leader state', () => {
     const clock = new TestClock();
     const transport = new TestTransport<string>();
-    const node = createNode("a", ["a"], clock, transport);
+    const node = createNode('a', ['a'], clock, transport);
     node.startElection();
-    expect(node.state.role).toBe("leader");
-    node.append("heartbeat");
+    expect(node.state.role).toBe('leader');
+    node.append('heartbeat');
     expect(node.getState().commitIndex).toBe(0);
   });
 });

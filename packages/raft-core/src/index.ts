@@ -7,7 +7,7 @@ export interface LogEntry<TCommand = unknown> {
 }
 
 export interface RequestVoteRequest {
-  type: "RequestVote";
+  type: 'RequestVote';
   term: number;
   candidateId: NodeId;
   lastLogIndex: number;
@@ -15,13 +15,13 @@ export interface RequestVoteRequest {
 }
 
 export interface RequestVoteResponse {
-  type: "RequestVoteResponse";
+  type: 'RequestVoteResponse';
   term: number;
   voteGranted: boolean;
 }
 
 export interface AppendEntriesRequest<TCommand = unknown> {
-  type: "AppendEntries";
+  type: 'AppendEntries';
   term: number;
   leaderId: NodeId;
   prevLogIndex: number;
@@ -31,7 +31,7 @@ export interface AppendEntriesRequest<TCommand = unknown> {
 }
 
 export interface AppendEntriesResponse {
-  type: "AppendEntriesResponse";
+  type: 'AppendEntriesResponse';
   term: number;
   success: boolean;
   matchIndex: number;
@@ -40,23 +40,20 @@ export interface AppendEntriesResponse {
 }
 
 export type RaftMessage<TCommand = unknown> =
-  | RequestVoteRequest
-  | RequestVoteResponse
-  | AppendEntriesRequest<TCommand>
-  | AppendEntriesResponse;
+  RequestVoteRequest | RequestVoteResponse | AppendEntriesRequest<TCommand> | AppendEntriesResponse;
 
 export type FollowerState = {
-  role: "follower";
+  role: 'follower';
   leaderId: NodeId | null;
   electionDeadline: number;
 };
 export type CandidateState = {
-  role: "candidate";
+  role: 'candidate';
   votesReceived: NodeId[];
   electionDeadline: number;
 };
 export type LeaderState = {
-  role: "leader";
+  role: 'leader';
   nextIndex: Record<NodeId, number>;
   matchIndex: Record<NodeId, number>;
   heartbeatDeadline: number;
@@ -87,12 +84,12 @@ export interface RaftNodeOptions<TCommand = unknown> {
   heartbeatIntervalMs?: number;
   apply?: (command: TCommand, index: number, term: number) => void;
   initialLog?: readonly LogEntry<TCommand>[];
-  initialState?: "follower" | "candidate";
+  initialState?: 'follower' | 'candidate';
   initialTerm?: number;
 }
 
 function lastIndex<T>(log: readonly LogEntry<T>[]): number {
-  return log.length === 0 ? 0 : log[log.length - 1]?.index ?? 0;
+  return log.length === 0 ? 0 : (log[log.length - 1]?.index ?? 0);
 }
 
 function termAt<T>(log: readonly LogEntry<T>[], index: number): number {
@@ -122,7 +119,7 @@ export class RaftNode<TCommand = unknown> {
 
   constructor(options: RaftNodeOptions<TCommand>) {
     this.id = options.id;
-    this.peers = options.peers.filter(peer => peer !== options.id);
+    this.peers = options.peers.filter((peer) => peer !== options.id);
     this.clock = options.clock ?? { now: () => 0 };
     this.prng = options.prng ?? { random: () => 0.5 };
     this.transport = options.transport ?? { send: () => undefined };
@@ -136,7 +133,7 @@ export class RaftNode<TCommand = unknown> {
       index: entry.index ?? position + 1,
     }));
     this.state = {
-      role: "follower",
+      role: 'follower',
       leaderId: null,
       electionDeadline: this.clock.now() + this.randomElectionTimeout(),
     };
@@ -152,7 +149,7 @@ export class RaftNode<TCommand = unknown> {
 
   resetElectionTimer(leaderId: NodeId | null = null): void {
     this.state = {
-      role: "follower",
+      role: 'follower',
       leaderId,
       electionDeadline: this.clock.now() + this.randomElectionTimeout(),
     };
@@ -175,7 +172,7 @@ export class RaftNode<TCommand = unknown> {
     }
     matchIndex[this.id] = lastIndex(this.log);
     this.state = {
-      role: "leader",
+      role: 'leader',
       nextIndex,
       matchIndex,
       heartbeatDeadline: this.clock.now(),
@@ -184,12 +181,12 @@ export class RaftNode<TCommand = unknown> {
   }
 
   startElection(): void {
-    if (this.state.role === "leader") return;
+    if (this.state.role === 'leader') return;
     this.currentTerm++;
     this.votedFor = this.id;
     const votesReceived = [this.id];
     this.state = {
-      role: "candidate",
+      role: 'candidate',
       votesReceived,
       electionDeadline: this.clock.now() + this.randomElectionTimeout(),
     };
@@ -198,7 +195,7 @@ export class RaftNode<TCommand = unknown> {
     const lastLogTerm = termAt(this.log, lastLogIndex);
     for (const peer of this.peers) {
       this.transport.send(this.id, peer, {
-        type: "RequestVote",
+        type: 'RequestVote',
         term: this.currentTerm,
         candidateId: this.id,
         lastLogIndex,
@@ -214,7 +211,7 @@ export class RaftNode<TCommand = unknown> {
 
   tick(): void {
     const now = this.clock.now();
-    if (this.state.role === "leader") {
+    if (this.state.role === 'leader') {
       if (now >= this.state.heartbeatDeadline) {
         this.state.heartbeatDeadline = now + this.heartbeatIntervalMs;
         this.broadcastAppendEntries();
@@ -228,16 +225,16 @@ export class RaftNode<TCommand = unknown> {
     if (message.term > this.currentTerm) this.becomeFollower(message.term);
 
     switch (message.type) {
-      case "RequestVote":
+      case 'RequestVote':
         this.handleRequestVote(from, message);
         break;
-      case "RequestVoteResponse":
+      case 'RequestVoteResponse':
         this.handleRequestVoteResponse(from, message);
         break;
-      case "AppendEntries":
+      case 'AppendEntries':
         this.handleAppendEntries(from, message);
         break;
-      case "AppendEntriesResponse":
+      case 'AppendEntriesResponse':
         this.handleAppendEntriesResponse(from, message);
         break;
     }
@@ -255,15 +252,18 @@ export class RaftNode<TCommand = unknown> {
       const candidateIsUpToDate =
         request.lastLogTerm > lastLogTerm ||
         (request.lastLogTerm === lastLogTerm && request.lastLogIndex >= lastLogIndex);
-      if ((this.votedFor === null || this.votedFor === request.candidateId) && candidateIsUpToDate) {
+      if (
+        (this.votedFor === null || this.votedFor === request.candidateId) &&
+        candidateIsUpToDate
+      ) {
         this.votedFor = request.candidateId;
         voteGranted = true;
-        if (this.state.role !== "follower") this.resetElectionTimer(request.candidateId);
+        if (this.state.role !== 'follower') this.resetElectionTimer(request.candidateId);
         else this.resetElectionTimer(request.candidateId);
       }
     }
     this.transport.send(this.id, from, {
-      type: "RequestVoteResponse",
+      type: 'RequestVoteResponse',
       term: this.currentTerm,
       voteGranted,
     });
@@ -275,7 +275,7 @@ export class RaftNode<TCommand = unknown> {
       return;
     }
     if (
-      this.state.role === "candidate" &&
+      this.state.role === 'candidate' &&
       response.term === this.currentTerm &&
       response.voteGranted
     ) {
@@ -287,24 +287,27 @@ export class RaftNode<TCommand = unknown> {
   private handleAppendEntries(from: NodeId, request: AppendEntriesRequest<TCommand>): void {
     if (request.term < this.currentTerm) {
       this.transport.send(this.id, from, {
-        type: "AppendEntriesResponse",
+        type: 'AppendEntriesResponse',
         term: this.currentTerm,
         success: false,
         matchIndex: lastIndex(this.log),
       });
       return;
     }
-    if (request.term === this.currentTerm && this.state.role === "leader") {
+    if (request.term === this.currentTerm && this.state.role === 'leader') {
       this.becomeFollower(request.term, request.leaderId);
     } else if (request.term >= this.currentTerm) {
       this.becomeFollower(request.term, request.leaderId);
     }
 
-    if (request.prevLogIndex > 0 && termAt(this.log, request.prevLogIndex) !== request.prevLogTerm) {
+    if (
+      request.prevLogIndex > 0 &&
+      termAt(this.log, request.prevLogIndex) !== request.prevLogTerm
+    ) {
       const conflictIndex = request.prevLogIndex;
       const conflictTerm = termAt(this.log, conflictIndex);
       this.transport.send(this.id, from, {
-        type: "AppendEntriesResponse",
+        type: 'AppendEntriesResponse',
         term: this.currentTerm,
         success: false,
         matchIndex: lastIndex(this.log),
@@ -332,7 +335,7 @@ export class RaftNode<TCommand = unknown> {
     }
 
     this.transport.send(this.id, from, {
-      type: "AppendEntriesResponse",
+      type: 'AppendEntriesResponse',
       term: this.currentTerm,
       success: true,
       matchIndex: request.prevLogIndex + request.entries.length,
@@ -344,7 +347,7 @@ export class RaftNode<TCommand = unknown> {
       this.becomeFollower(response.term);
       return;
     }
-    if (this.state.role !== "leader" || response.term !== this.currentTerm) return;
+    if (this.state.role !== 'leader' || response.term !== this.currentTerm) return;
 
     if (response.success) {
       this.state.matchIndex[from] = response.matchIndex;
@@ -362,7 +365,8 @@ export class RaftNode<TCommand = unknown> {
           break;
         }
       }
-      this.state.nextIndex[from] = lastWithTerm > 0 ? lastWithTerm + 1 : (response.conflictIndex ?? next - 1);
+      this.state.nextIndex[from] =
+        lastWithTerm > 0 ? lastWithTerm + 1 : (response.conflictIndex ?? next - 1);
     } else {
       this.state.nextIndex[from] = Math.max(1, next - 1);
     }
@@ -370,7 +374,7 @@ export class RaftNode<TCommand = unknown> {
   }
 
   private advanceCommitIndex(): void {
-    if (this.state.role !== "leader") return;
+    if (this.state.role !== 'leader') return;
     for (let index = lastIndex(this.log); index > this.commitIndex; index--) {
       if (termAt(this.log, index) !== this.currentTerm) continue;
       let replicated = 1;
@@ -389,12 +393,13 @@ export class RaftNode<TCommand = unknown> {
     while (this.lastApplied < this.commitIndex) {
       this.lastApplied++;
       const entry = this.log[this.lastApplied - 1];
-      if (entry?.index === this.lastApplied) this.applyCommand(entry.command, entry.index, entry.term);
+      if (entry?.index === this.lastApplied)
+        this.applyCommand(entry.command, entry.index, entry.term);
     }
   }
 
   append(command: TCommand): LogEntry<TCommand> | null {
-    if (this.state.role !== "leader") return null;
+    if (this.state.role !== 'leader') return null;
     const entry: LogEntry<TCommand> = {
       term: this.currentTerm,
       index: lastIndex(this.log) + 1,
@@ -415,12 +420,12 @@ export class RaftNode<TCommand = unknown> {
   }
 
   private sendAppendEntries(peer: NodeId): void {
-    if (this.state.role !== "leader") return;
+    if (this.state.role !== 'leader') return;
     const nextIndex = this.state.nextIndex[peer] ?? lastIndex(this.log) + 1;
     const prevLogIndex = Math.max(0, nextIndex - 1);
-    const entries = this.log.filter(entry => entry.index >= nextIndex);
+    const entries = this.log.filter((entry) => entry.index >= nextIndex);
     this.transport.send(this.id, peer, {
-      type: "AppendEntries",
+      type: 'AppendEntries',
       term: this.currentTerm,
       leaderId: this.id,
       prevLogIndex,
@@ -431,12 +436,12 @@ export class RaftNode<TCommand = unknown> {
   }
 
   private broadcastAppendEntries(): void {
-    if (this.state.role !== "leader") return;
+    if (this.state.role !== 'leader') return;
     for (const peer of this.peers) this.sendAppendEntries(peer);
   }
 
   getState(): {
-    role: RaftRoleState["role"];
+    role: RaftRoleState['role'];
     currentTerm: number;
     votedFor: NodeId | null;
     commitIndex: number;
@@ -449,7 +454,7 @@ export class RaftNode<TCommand = unknown> {
       votedFor: this.votedFor,
       commitIndex: this.commitIndex,
       lastApplied: this.lastApplied,
-      log: this.log.map(entry => ({ ...entry })),
+      log: this.log.map((entry) => ({ ...entry })),
     };
   }
 
@@ -464,7 +469,7 @@ export class RaftNode<TCommand = unknown> {
     return {
       currentTerm: this.currentTerm,
       votedFor: this.votedFor,
-      log: this.log.map(entry => ({ ...entry })),
+      log: this.log.map((entry) => ({ ...entry })),
       commitIndex: this.commitIndex,
       lastApplied: this.lastApplied,
       roleState: this.state,

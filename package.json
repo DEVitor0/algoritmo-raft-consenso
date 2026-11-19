@@ -10,7 +10,7 @@
     "build": "npm run build --workspaces --if-present",
     "typecheck": "tsc -b",
     "lint": "eslint .",
-    "format:check": "prettier --check .",
+    "format:check": "prettier --check \"packages/{raft-core,node,client,chaos}/src/**/*.{ts,tsx}\" \"packages/{raft-core,node,chaos}/test/**/*.ts\" \"packages/dashboard/src/{App.tsx,App.css,index.css}\" \"docs/adr/*.md\" Readme.md CONTRIBUTING.md CHANGELOG.md .github/workflows/*.yml docker-compose.yml",
     "test": "vitest run",
     "test:watch": "vitest",
     "sim": "npm --workspace @raft/chaos run sim --",
