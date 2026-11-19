@@ -523,6 +523,22 @@ function MessageLayer({ messages }: { messages: BrowserMessage[] }) {
   };
   return (
     <div className="message-layer" aria-label="Mensagens da rede">
+      <svg className="message-routes" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+        {messages.slice(-12).map((message) => {
+          const from = point(message.from);
+          const to = point(message.to);
+          return (
+            <line
+              key={`route-${message.id}`}
+              className={`route-${message.status}`}
+              x1={from.x}
+              y1={from.y}
+              x2={to.x}
+              y2={to.y}
+            />
+          );
+        })}
+      </svg>
       {messages.slice(-20).map((message) => {
         const from = point(message.from);
         const to = point(message.to);

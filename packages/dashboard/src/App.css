@@ -455,6 +455,34 @@ select:hover {
   pointer-events: none;
 }
 
+.message-routes {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.message-routes line {
+  stroke-width: 0.18;
+  stroke-dasharray: 1 1.8;
+  opacity: 0.34;
+}
+
+.message-routes .route-traveling {
+  stroke: var(--blue);
+  animation: route-flow 1s linear infinite;
+}
+
+.message-routes .route-delivered {
+  stroke: var(--accent);
+}
+
+.message-routes .route-dropped {
+  stroke: var(--danger);
+  stroke-dasharray: 0.4 1.8;
+}
+
 .message-dot {
   --dx: 0%;
   --dy: 0%;
@@ -500,6 +528,12 @@ select:hover {
   to {
     transform: scale(1.8);
     opacity: 0;
+  }
+}
+
+@keyframes route-flow {
+  to {
+    stroke-dashoffset: -3;
   }
 }
 
