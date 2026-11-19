@@ -308,6 +308,28 @@ function App() {
             <span><i className="legend-dot follower" /> follower</span>
             <span><i className="legend-dot offline" /> indisponível</span>
           </div>
+          <div className="replication-summary">
+            <span className="summary-label">REPLICAÇÃO</span>
+            <span>
+              commit{' '}
+              <strong>
+                {mode === 'simulation'
+                  ? Math.max(...snapshot.nodes.map((node) => node.commitIndex))
+                  : cluster?.commitIndex ?? 0}
+              </strong>
+            </span>
+            <span>
+              termo{' '}
+              <strong>
+                {mode === 'simulation'
+                  ? Math.max(...snapshot.nodes.map((node) => node.term))
+                  : cluster?.term ?? 0}
+              </strong>
+            </span>
+            <span className="summary-state">
+              <i /> {mode === 'simulation' ? 'log local' : cluster ? 'sincronizado' : 'aguardando controller'}
+            </span>
+          </div>
           {mode === 'simulation' && (
             <p className="hint">
               Clique em dois nós para cortar/restaurar o link. Duplo clique em um nó para pará-lo ou
@@ -499,11 +521,11 @@ function NodeCard({
         termo {node.term} · commit {node.commitIndex}
       </small>
       {'log' in node && (
-        <div className="log-row">
+        <div className="log-row" aria-label={`log replicado de ${node.id}`}>
           {node.log.map((entry) => (
             <i
               key={entry.index}
-              className={entry.committed ? 'committed' : 'pending'}
+              className={`log-entry ${entry.committed ? 'committed' : 'pending'}`}
               title={`índice ${entry.index}, termo ${entry.term}`}
             >
               {entry.index}

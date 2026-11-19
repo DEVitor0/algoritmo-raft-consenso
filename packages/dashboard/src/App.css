@@ -324,6 +324,43 @@ select:hover {
   gap: 6px;
 }
 
+.replication-summary {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-top: 15px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(44, 91, 125, 0.5);
+  color: var(--muted);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+}
+
+.replication-summary strong {
+  color: var(--text);
+  font-size: 12px;
+}
+
+.summary-label {
+  color: var(--accent);
+  letter-spacing: 0.1em;
+}
+
+.summary-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.summary-state i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
 .legend-dot {
   width: 7px;
   height: 7px;
@@ -446,6 +483,7 @@ select:hover {
 
 .log-row i.committed {
   background: var(--accent);
+  animation: commit-pop 380ms ease-out both;
 }
 
 .message-layer {
@@ -534,6 +572,20 @@ select:hover {
 @keyframes route-flow {
   to {
     stroke-dashoffset: -3;
+  }
+}
+
+@keyframes commit-pop {
+  from {
+    transform: scale(0.65);
+    box-shadow: 0 0 0 rgba(85, 224, 181, 0);
+  }
+  65% {
+    transform: scale(1.16);
+    box-shadow: 0 0 10px rgba(85, 224, 181, 0.35);
+  }
+  to {
+    transform: scale(1);
   }
 }
 
