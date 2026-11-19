@@ -52,7 +52,7 @@
 
 - [x] Criar simulador determinístico com relógio virtual e seed.
 - [x] Simular perda, atraso, reordenação, duplicação e partições.
-- [x] Adicionar varredura determinística semelhante a propriedade das invariantes Raft (fast-check não estava instalado).
+- [x] Adicionar testes fast-check das invariantes Raft.
 - [x] Implementar verificador de linearizabilidade por chave.
 - [x] Testar históricos válidos e inválidos.
 - [x] Criar cenários nomeados e relatórios reproduzíveis.

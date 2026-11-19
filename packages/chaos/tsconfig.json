@@ -4,9 +4,14 @@
     "rootDir": "src",
     "outDir": "dist"
   },
+  "files": [
+    "src/index.ts",
+    "src/seed.ts",
+    "src/network.ts",
+    "src/linearizability.ts",
+    "src/simulator.ts",
+    "src/sim.ts"
+  ],
   "include": ["src/**/*.ts"],
-  "references": [
-    { "path": "../raft-core" },
-    { "path": "../node" }
-  ]
+  "references": [{ "path": "../raft-core" }, { "path": "../node" }]
 }

@@ -6,9 +6,9 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
-    "build": "tsup src/index.ts --format esm --dts",
+    "build": "tsup src/index.ts --format esm",
     "typecheck": "tsc -b",
-    "sim": "tsx src/sim.ts",
+    "sim": "tsup src/sim.ts --format esm --out-dir dist --silent && node dist/sim.js",
     "cluster:dev": "tsx src/cluster-dev.ts"
   },
   "dependencies": {
