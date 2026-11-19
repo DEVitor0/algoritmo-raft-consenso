@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "prebuild": "npm run build --workspace @raft/raft-core"
   },
   "dependencies": {
     "@emotion/react": "^11.11.1",
