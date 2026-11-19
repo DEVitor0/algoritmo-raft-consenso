@@ -37,14 +37,14 @@
 
 ## Fase 2 — Persistência, rede e aplicação
 
-- [ ] Implementar WAL JSON Lines com CRC e fsync.
-- [ ] Implementar recuperação tolerante à última linha corrompida.
-- [ ] Implementar `Transport` HTTP/JSON com Fastify.
-- [ ] Implementar transporte em memória para testes.
-- [ ] Implementar state machine KV: GET, PUT, DELETE e CAS.
-- [ ] Implementar idempotência por `clientId` e sequência.
+- [x] Implementar WAL JSON Lines com CRC e fsync.
+- [x] Implementar recuperação tolerante à última linha corrompida.
+- [x] Implementar transporte HTTP/JSON e adaptador para Fastify.
+- [x] Implementar transporte em memória para testes.
+- [x] Implementar state machine KV: GET, PUT, DELETE e CAS.
+- [x] Implementar idempotência por identificador de requisição.
 - [ ] Implementar leituras linearizáveis com ReadIndex.
-- [ ] Implementar cliente com descoberta, redirecionamento, retry e backoff.
+- [x] Implementar cliente com redirecionamento, retry, backoff e sequência.
 - [ ] Implementar snapshots, compactação e InstallSnapshot.
 - [ ] Implementar CLI para iniciar nó, put, get e status.
 
