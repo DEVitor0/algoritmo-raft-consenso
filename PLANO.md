@@ -2,11 +2,11 @@
 
 ## Regras de execução
 
-- [ ] Manter o núcleo Raft determinístico e sem efeitos externos.
-- [ ] Após cada passo: executar lint, checagem de tipos e testes disponíveis.
-- [ ] Atualizar este arquivo e commitar cada tarefa concluída.
-- [ ] Registrar bloqueios e não afirmar recursos não implementados ou não testados.
-- [ ] Não usar `Math.random` nem dados inventados em estados ou métricas exibidos.
+- [x] Manter o núcleo Raft determinístico e sem efeitos externos.
+- [x] Após cada passo: executar lint, checagem de tipos e testes disponíveis.
+- [x] Atualizar este arquivo e commitar cada tarefa concluída.
+- [x] Registrar bloqueios e não afirmar recursos não implementados ou não testados.
+- [x] Não usar `Math.random` nem dados inventados em estados ou métricas exibidos.
 
 ## Fase 0 — Fundação
 
@@ -94,3 +94,5 @@
 - 2026-11-18: alterações documentais anteriores estavam pendentes no worktree; serão preservadas.
 - 2026-11-19: `npm install` bloqueado porque os workspaces `@raft/raft-core` ainda não existiam quando a instalação foi tentada; repetir após a criação do núcleo.
 - 2026-11-19: `fast-check` não está instalado neste checkout; os testes de propriedade usam uma varredura seeded em Vitest sem adicionar dependências.
+- 2026-11-19: a validação funcional atual passou (`npm run lint`, `npm run typecheck`, `npm test`, `npm run build` e `npm run format:check`), com 19 testes aprovados.
+- 2026-11-19: a entrega ainda não pode ser marcada como `0.1.0`: o controller mantém cinco nós lógicos em um processo, a persistência ainda cobre principalmente a máquina KV, as páginas operacionais além de Cluster são shell, e Storybook/Testing Library/Playwright continuam pendentes.
