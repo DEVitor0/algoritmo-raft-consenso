@@ -50,12 +50,12 @@
 
 ## Fase 3 — Verificação de correção
 
-- [ ] Criar simulador determinístico com relógio virtual e seed.
-- [ ] Simular perda, atraso, reordenação, duplicação e partições.
-- [ ] Adicionar testes fast-check das invariantes Raft.
-- [ ] Implementar verificador de linearizabilidade por chave.
-- [ ] Testar históricos válidos e inválidos.
-- [ ] Criar cenários nomeados e relatórios reproduzíveis.
+- [x] Criar simulador determinístico com relógio virtual e seed.
+- [x] Simular perda, atraso, reordenação, duplicação e partições.
+- [x] Adicionar varredura determinística semelhante a propriedade das invariantes Raft (fast-check não estava instalado).
+- [x] Implementar verificador de linearizabilidade por chave.
+- [x] Testar históricos válidos e inválidos.
+- [x] Criar cenários nomeados e relatórios reproduzíveis.
 - [ ] Avaliar especificação TLA+ opcional.
 
 ## Fase 4 — Observabilidade e benchmark
@@ -91,3 +91,4 @@
 - 2026-11-18: `.github/copilot-instructions.md` não encontrado no checkout.
 - 2026-11-18: alterações documentais anteriores estavam pendentes no worktree; serão preservadas.
 - 2026-11-19: `npm install` bloqueado porque os workspaces `@raft/raft-core` ainda não existiam quando a instalação foi tentada; repetir após a criação do núcleo.
+- 2026-11-19: `fast-check` não está instalado neste checkout; os testes de propriedade usam uma varredura seeded em Vitest sem adicionar dependências.
